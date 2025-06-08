@@ -11,14 +11,17 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-app.route("/api/v1/user").post((req, res) => {
-  res.send({ data: "This Is The Data: 🤌" });
-});
+//Routes Imports
+import { userRoute } from "./routes/user.route.js";
+
+// Routes
+app.use("/api/v1/user", userRoute);
 
 app.use(globalErrorHandler);
 export default app;

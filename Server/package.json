@@ -1,23 +1,7 @@
 {
-  "name": "online-job-portal",
+  "name": "online_job_portal",
   "version": "1.0.0",
-  "description": "this is an online job portal",
-  "keywords": [
-    "job",
-    "portal",
-    "online",
-    "job",
-    "portal",
-    "online",
-    "job",
-    "online",
-    "job",
-    "portal"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "Online-Job-Portal"
-  },
+  "description": "This Is Online Job Portal",
   "license": "ISC",
   "author": "Anish Dhakal",
   "type": "module",
