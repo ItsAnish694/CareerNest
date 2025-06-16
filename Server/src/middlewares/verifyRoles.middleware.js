@@ -3,8 +3,8 @@ import { ApiError } from "../utils/apiError.util.js";
 
 export const verifyRoleAccess = (...roles) =>
   asyncHandler((req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      throw new ApiError(403, "Wrong Role", "Access Denied");
-    }
+    if (!req.user || !roles.includes(req.user.role))
+      throw new ApiError(403, "Access Denied", "Unauthorized Access");
+
     next();
   });

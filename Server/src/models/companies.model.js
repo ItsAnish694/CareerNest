@@ -2,64 +2,38 @@ import { Schema, model } from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const userSchema = new Schema(
+const companySchema = new Schema(
   {
-    fullname: {
+    companyName: {
       type: String,
       required: true,
       trim: true,
     },
-    profilePicture: {
+    companyLogo: {
       type: String,
       trim: true,
       default:
-        "https://res.cloudinary.com/dcsgpah7o/raw/upload/v1750015844/yhfkchms5dvz9we2nvga.png",
+        "https://res.cloudinary.com/dcsgpah7o/image/upload/v1749728727/y2vmdzxonqvfcxobngfc.png",
+      required: true,
     },
-    email: {
+    companyEmail: {
       type: String,
       trim: true,
       unique: true,
       lowercase: true,
       required: true,
     },
-    password: {
+    companyPassword: {
       trim: true,
       type: String,
       required: true,
     },
-    phoneNumber: {
+    companyPhoneNumber: {
       trim: true,
       type: String,
       unique: true,
     },
-    resumeLink: {
-      trim: true,
-      type: String,
-    },
-    role: {
-      type: String,
-      enum: ["user"],
-      required: true,
-      default: "user",
-    },
-    skills: [
-      {
-        trim: true,
-        lowercase: true,
-        type: String,
-      },
-    ],
-    experiencedYears: {
-      type: String,
-      trim: true,
-      default: "No Experience",
-      required: true,
-    },
-    bio: {
-      trim: true,
-      type: String,
-    },
-    interestedIndustry: {
+    industry: {
       type: String,
       enum: [
         "Information Technology",
@@ -87,66 +61,74 @@ const userSchema = new Schema(
       required: true,
       default: "Others",
     },
-    location: {
+    role: {
+      trim: true,
+      type: String,
+      enum: ["company"],
+      required: true,
+      default: "company",
+    },
+    document: {
       trim: true,
       type: String,
     },
-    applicationCount: {
-      type: Number,
-      default: 0,
+    companyBio: {
+      trim: true,
+      type: String,
     },
-    bookmarkCount: {
-      type: Number,
-      default: 0,
+    companyLocation: {
+      trim: true,
+      type: String,
     },
     refreshToken: {
       trim: true,
       type: String,
     },
     isVerified: {
-      type: Boolean,
-      default: false,
+      type: String,
+      enum: ["Not Verified", "Pending", "Verified"],
+      default: "Not Verified",
     },
   },
   { timestamps: true }
 );
 
-userSchema.pre("save", async function (next) {
-  if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 10);
+companySchema.pre("save", async function (next) {
+  if (this.isModified("companyPassword")) {
+    this.companyPassword = await bcrypt.hash(this.companyPassword, 10);
   }
   next();
 });
 
-userSchema.methods.checkPassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
+companySchema.methods.checkPassword = async function (password) {
+  return await bcrypt.compare(password, this.companyPassword);
 };
 
-userSchema.methods.generateAccessToken = function () {
+companySchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
       _id: this._id,
-      fullname: this.fullname,
-      email: this.email,
-      phoneNumber: this.phoneNumber,
+      companyName: this.companyName,
+      companyEmail: this.companyEmail,
+      companyPhoneNumber: this.companyPhoneNumber,
       role: this.role,
-      isVerified: this.isVerified,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPDATE }
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPDATE,
+    }
   );
 };
 
-userSchema.methods.generateRefreshToken = function () {
+companySchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {
       _id: this._id,
       role: this.role,
-      isVerified: this.isVerified,
     },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: process.env.REFRESH_TOKEN_EXPDATE }
   );
 };
 
-export const User = model("User", userSchema);
+export const Company = model("Company", companySchema);

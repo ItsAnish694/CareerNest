@@ -6,7 +6,7 @@ export function globalErrorHandler(error, req, res, next) {
   //   process.env.NODE_ENV === "development" ? error.stack : undefined;
   const Stack = error.stack || undefined;
 
-  res.status(Status).json({
+  return res.status(Status).json({
     Success: false,
     Error: {
       Status,

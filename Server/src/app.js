@@ -18,10 +18,14 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 //Routes Imports
-import { userRoute } from "./routes/user.route.js";
+import { userRoute } from "./routes/users.route.js";
+import { companyRoute } from "./routes/companies.route.js";
+import { adminRoute } from "./routes/admin.route.js";
 
 // Routes
 app.use("/api/v1/user", userRoute);
+app.use("/api/v1/company", companyRoute);
+app.use("/api/v1/admin", adminRoute);
 
 app.use(globalErrorHandler);
 export default app;
