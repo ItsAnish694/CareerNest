@@ -30,7 +30,6 @@ const userSchema = new Schema(
     phoneNumber: {
       trim: true,
       type: String,
-      unique: true,
     },
     resumeLink: {
       trim: true,
@@ -87,9 +86,20 @@ const userSchema = new Schema(
       required: true,
       default: "Others",
     },
-    location: {
+    district: {
       trim: true,
       type: String,
+      lowercase: true,
+    },
+    city: {
+      trim: true,
+      type: String,
+      lowercase: true,
+    },
+    area: {
+      trim: true,
+      type: String,
+      lowercase: true,
     },
     applicationCount: {
       type: Number,
@@ -129,6 +139,7 @@ userSchema.methods.generateAccessToken = function () {
       fullname: this.fullname,
       email: this.email,
       phoneNumber: this.phoneNumber,
+      interestedIndustry: this.interestedIndustry,
       role: this.role,
       isVerified: this.isVerified,
     },

@@ -76,9 +76,20 @@ const companySchema = new Schema(
       trim: true,
       type: String,
     },
-    companyLocation: {
+    companyDistrict: {
       trim: true,
       type: String,
+      lowercase: true,
+    },
+    companyCity: {
+      trim: true,
+      type: String,
+      lowercase: true,
+    },
+    companyArea: {
+      trim: true,
+      type: String,
+      lowercase: true,
     },
     refreshToken: {
       trim: true,
@@ -112,6 +123,7 @@ companySchema.methods.generateAccessToken = function () {
       companyEmail: this.companyEmail,
       companyPhoneNumber: this.companyPhoneNumber,
       role: this.role,
+      industry: this.industry,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {

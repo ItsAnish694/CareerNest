@@ -2,7 +2,11 @@ import { Router } from "express";
 import { verifyJWTAuth } from "../middlewares/verifyJWT.middleware.js";
 import { verifyRoleAccess } from "../middlewares/verifyRoles.middleware.js";
 import {
+  addBookmarkJob,
   applyJobApplication,
+  deleteBookmarkJob,
+  deleteJobApplication,
+  getAllJobs,
   loginUser,
   registerUser,
   updateEmail,
@@ -23,56 +27,36 @@ const userRoute = Router();
 
 userRoute
   .route("/register")
-  .post(uploadLocal.single("profilepic"), registerUser);
+  .post(uploadLocal.single("profilePic"), registerUser);
 userRoute
   .route("/verify/:token")
   .post(uploadLocal.single("resume"), verifyUser);
 userRoute.route("/login").post(loginUser);
+
+userRoute.use(verifyJWTAuth, verifyRoleAccess("user"));
+
+userRoute.route("/logout").post(userLogOut);
+userRoute.route("/profile").get(userProfile).patch(updateProfileInfo);
+userRoute.route("/profile/skills").patch(updateUserSkills);
+
 userRoute
-  .route("/logout")
-  .post(verifyJWTAuth, verifyRoleAccess("user"), userLogOut);
+  .route("/profile/profilePic")
+  .patch(uploadLocal.single("profilePic"), updateProfilePicture);
 userRoute
-  .route("/profile")
-  .post(verifyJWTAuth, verifyRoleAccess("user"), userProfile);
+  .route("/profile/resume")
+  .patch(uploadLocal.single("resume"), updateResume);
+
+userRoute.route("/profile/password").patch(updatePassword);
+userRoute.route("/profile/email").patch(updateEmail);
+userRoute.route("/profile/verifyEmail").post(verifyEmail);
+userRoute.route("/jobs").get(getAllJobs);
+
 userRoute
-  .route("/updateprofile")
-  .patch(verifyJWTAuth, verifyRoleAccess("user"), updateProfileInfo);
-userRoute
-  .route("/updateskills")
-  .patch(verifyJWTAuth, verifyRoleAccess("user"), updateUserSkills);
-userRoute
-  .route("/updateprofilepic")
-  .patch(
-    verifyJWTAuth,
-    verifyRoleAccess("user"),
-    uploadLocal.single("profilePic"),
-    updateProfilePicture
-  );
-userRoute
-  .route("/updateresume")
-  .patch(
-    verifyJWTAuth,
-    verifyRoleAccess("user"),
-    uploadLocal.single("resume"),
-    updateResume
-  );
-userRoute
-  .route("/updatepassword")
-  .patch(verifyJWTAuth, verifyRoleAccess("user"), updatePassword);
-userRoute
-  .route("/updateemail")
-  .patch(verifyJWTAuth, verifyRoleAccess("user"), updateEmail);
-userRoute
-  .route("/verifyemail")
-  .get(verifyJWTAuth, verifyRoleAccess("user"), verifyEmail);
-userRoute
-  .route("/apply/:id")
-  .post(verifyJWTAuth, verifyRoleAccess("user"), applyJobApplication);
-userRoute
-  .route("/apply/:id")
-  .delete(verifyJWTAuth, verifyRoleAccess("user"), deleteJobApplication);
-userRoute
-  .route("/jobdetail/:id")
-  .post(verifyJWTAuth, verifyRoleAccess("user"), viewJobInfo);
+  .route("/jobs/:id")
+  .get(viewJobInfo)
+  .post(applyJobApplication)
+  .delete(deleteJobApplication);
+
+userRoute.route("/bookmark/:id").post(addBookmarkJob).delete(deleteBookmarkJob);
 
 export { userRoute };

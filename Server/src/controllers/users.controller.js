@@ -8,10 +8,12 @@ import {
   uploadCloudinary,
   deleteCloudinary,
 } from "../utils/cloudinary.util.js";
+import { calculateJobMatchScores } from "../utils/calculateMatchJobScore.util.js";
 import { sendEmail } from "../utils/nodemailer.util.js";
 import { User } from "../models/users.model.js";
 import { Job } from "../models/jobs.model.js";
 import { Application } from "../models/applications.model.js";
+import { Bookmark } from "../models/bookmarks.model.js";
 
 export const registerUser = asyncHandler(async function (req, res) {
   const { fullname, email, password } = req.body;
@@ -135,15 +137,22 @@ export const verifyUser = asyncHandler(async function (req, res) {
   const {
     skills,
     phoneNumber,
-    location,
+    district,
+    city,
+    area,
     experiencedYears,
     interestedIndustry,
   } = req.body;
 
   if (
-    [phoneNumber, location, experiencedYears, interestedIndustry].some(
-      (val) => !val?.trim()
-    )
+    [
+      phoneNumber,
+      district,
+      city,
+      area,
+      experiencedYears,
+      interestedIndustry,
+    ].some((val) => !val?.trim())
   ) {
     throw new ApiError(
       400,
@@ -207,7 +216,9 @@ export const verifyUser = asyncHandler(async function (req, res) {
   user.resumeLink = uploadedResume.secure_url;
   user.skills = skills;
   user.phoneNumber = phoneNumber;
-  user.location = location;
+  user.city = city;
+  user.district = district;
+  user.area = area;
   user.interestedIndustry = interestedIndustry;
   user.experiencedYears = experiencedYears;
   user.isVerified = true;
@@ -341,7 +352,9 @@ export const updateProfileInfo = asyncHandler(async function (req, res) {
     "fullname",
     "experiencedYears",
     "bio",
-    "location",
+    "district",
+    "city",
+    "area",
     "interestedIndustry",
   ];
 
@@ -633,52 +646,23 @@ export const applyJobApplication = asyncHandler(async function (req, res) {
       "You have already applied for this job"
     );
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  const newApplication = await Application.create({
+    jobID: job._id,
+    userID: user._id,
+    status: "Pending",
+    resume: user.resumeLink,
+  });
 
-  try {
-    const newApplication = await Application.create(
-      [
-        {
-          jobID: job._id,
-          userID: user._id,
-          status: "Pending",
-          resume: user.resumeLink,
-        },
-      ],
-      { session }
-    );
+  if (!newApplication)
+    throw new ApiError(500, "Error Applying Job", "Please Try Again");
 
-    if (!newApplication)
-      throw new ApiError(500, "Error Applying Job", "Please Try Again");
+  await User.updateOne({ _id: user._id }, { $inc: { applicationCount: 1 } });
 
-    await User.updateOne(
-      { _id: user._id },
-      { $inc: { applicationCount: 1 } },
-      { session }
-    );
+  await Job.updateOne({ _id: job._id }, { $inc: { applicationCount: 1 } });
 
-    await Job.updateOne(
-      { _id: job._id },
-      { $inc: { applicationCount: 1 } },
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, newApplication[0], "Successfully Applied"));
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw new ApiError(
-      error.status || 500,
-      error.name || "Error Occured",
-      error.message || "Something Happened In Server"
-    );
-  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, newApplication, "Successfully Applied"));
 });
 
 export const deleteJobApplication = asyncHandler(async function (req, res) {
@@ -694,42 +678,20 @@ export const deleteJobApplication = asyncHandler(async function (req, res) {
 
   if (!appliedJob) throw new ApiError(404, "Application Not Found");
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    await Application.deleteOne({ _id: appliedJob._id }, { session });
+  await Application.deleteOne({ _id: appliedJob._id });
 
-    await User.updateOne(
-      { _id: userID },
-      { $inc: { applicationCount: -1 } },
-      { session }
-    );
+  await User.updateOne({ _id: userID }, { $inc: { applicationCount: -1 } });
 
-    await Job.updateOne(
-      { _id: jobID },
-      { $inc: { applicationCount: -1 } },
-      { session }
-    );
+  await Job.updateOne({ _id: jobID }, { $inc: { applicationCount: -1 } });
 
-    await session.commitTransaction();
-    session.endSession();
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, null, "Removed Application"));
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw new ApiError(
-      error.status || 500,
-      error.name || "Error Occured",
-      error.message || "Something Happened In Server"
-    );
-  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Removed Application"));
 });
 
 export const viewJobInfo = asyncHandler(async function (req, res) {
   const jobID = req.params.id;
+  const userID = req.user?._id;
 
   if (!jobID) throw new ApiError(404, "No Job Id", "Please Provide Job Id");
 
@@ -737,7 +699,17 @@ export const viewJobInfo = asyncHandler(async function (req, res) {
     throw new ApiError(400, "Invalid Job ID", "Job ID format is not valid");
   }
 
-  const jobInfo = Job.aggregate([
+  if (!mongoose.isValidObjectId(userID)) {
+    throw new ApiError(400, "Invalid User ID", "User ID format is not valid");
+  }
+
+  const user = await User.findById(userID)
+    .select("skills experiencedYears interestedIndustry district city area")
+    .lean();
+
+  if (!user) throw new ApiError(404, "User Not Found");
+
+  const jobInfo = await Job.aggregate([
     {
       $match: { _id: new mongoose.Types.ObjectId(jobID) },
     },
@@ -768,18 +740,187 @@ export const viewJobInfo = asyncHandler(async function (req, res) {
         vacancies: 1,
         applicationDeadline: 1,
         applicationCount: 1,
+        createdAt: 1,
+        relatedIndustry: 1,
         companyInfo: {
           companyName: "$companyInfo.companyName",
-          industry: "$companyInfo.industry",
-          companyLocation: "$companyInfo.companyLocation",
+          companyLocation: {
+            district: "$companyInfo.companyDistrict",
+            city: "$companyInfo.companyCity",
+            area: "$companyInfo.companyArea",
+          },
           companyBio: "$companyInfo.companyBio",
         },
       },
     },
-  ]).exec();
+  ]);
 
-  if (!jobInfo || jobInfo.length === 0)
-    throw new ApiError(404, "Job Not Found");
+  const matchedJobs = calculateJobMatchScores(jobInfo, user);
 
-  return res.status(200).json(new ApiResponse(200, jobInfo[0], "Job Details"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, matchedJobs[0], "Job Details"));
+});
+
+export const addBookmarkJob = asyncHandler(async function (req, res) {
+  const jobID = req.params.id;
+  const userID = req.user._id;
+
+  if (!(mongoose.isValidObjectId(jobID) && mongoose.isValidObjectId(userID))) {
+    throw new ApiError(
+      400,
+      "Not Valid User Or Job",
+      "The ID's You Provided Are Not Valid"
+    );
+  }
+
+  const bookmarkExists = await Bookmark.findOne({ userID, jobID });
+
+  if (bookmarkExists) {
+    throw new ApiError(
+      400,
+      "Already Bookmarked",
+      "The Job is Already Bookmarked"
+    );
+  }
+
+  const bookmarkedJob = await Bookmark.create({ jobID, userID });
+
+  if (!bookmarkedJob) {
+    throw new ApiError(500, "Error Bookmark", "Can't Bookmark The Job");
+  }
+
+  await User.findByIdAndUpdate(userID, { $inc: { bookmarkCount: 1 } });
+
+  res.status(200).json(new ApiResponse(200, null, "Saved To Bookmark"));
+});
+
+export const deleteBookmarkJob = asyncHandler(async function (req, res) {
+  const jobID = req.params.id;
+  const userID = req.user._id;
+
+  if (!(mongoose.isValidObjectId(jobID) && mongoose.isValidObjectId(userID))) {
+    throw new ApiError(
+      400,
+      "Not Valid User Or Job",
+      "The ID's You Provided Are Not Valid"
+    );
+  }
+
+  const deleteBookmark = await Bookmark.findOneAndDelete({ userID, jobID });
+
+  if (!deleteBookmark) {
+    throw new ApiError(
+      404,
+      "Bookmark Not Found",
+      "The Bookmark Doesn't Exists"
+    );
+  }
+
+  await User.findByIdAndUpdate(userID, { $inc: { bookmarkCount: -1 } });
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, deleteBookmark, "Successfully Deleted"));
+});
+
+export const getAllJobs = asyncHandler(async function (req, res) {
+  const industry = req.user.interestedIndustry.toLowerCase();
+  const userID = req.user._id;
+  const { type = "recommended", limit = "10" } = req.query;
+
+  if (!mongoose.isValidObjectId(userID)) {
+    throw new ApiError(
+      400,
+      "Not A Valid Id",
+      "The ID You Provided Is Not Valid"
+    );
+  }
+
+  const user = await User.findById(userID)
+    .select("skills experiencedYears interestedIndustry district city area")
+    .lean();
+
+  if (!user) {
+    throw new ApiError(
+      404,
+      "User Not Found",
+      "The User You Trying To Find Doesn't Exists"
+    );
+  }
+
+  const getAllJobs = await Job.aggregate([
+    {
+      $match: {
+        relatedIndustry: industry,
+      },
+    },
+    { $sort: { createdAt: -1 } },
+    { $limit: 100 },
+    {
+      $lookup: {
+        from: "companies",
+        localField: "companyID",
+        foreignField: "_id",
+        as: "companyInfo",
+      },
+    },
+    {
+      $unwind: {
+        path: "$companyInfo",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        jobTitle: 1,
+        jobDescription: 1,
+        requiredSkills: 1,
+        jobType: 1,
+        requiredExperience: 1,
+        experienceLevel: 1,
+        salary: 1,
+        vacancies: 1,
+        applicationDeadline: 1,
+        applicationCount: 1,
+        createdAt: 1,
+        relatedIndustry: 1,
+        companyInfo: {
+          companyName: "$companyInfo.companyName",
+          companyLocation: {
+            district: "$companyInfo.companyDistrict",
+            city: "$companyInfo.companyCity",
+            area: "$companyInfo.companyArea",
+          },
+          companyBio: "$companyInfo.companyBio",
+        },
+      },
+    },
+  ]);
+
+  if (getAllJobs.length === 0) {
+    return res.status(200).json(new ApiResponse(200, [], "No jobs available"));
+  }
+
+  const matchedScore = calculateJobMatchScores(getAllJobs, user).sort(
+    (a, b) => {
+      if (type.toLowerCase() === "recommended") {
+        return b.totalMatchedScore - a.totalMatchedScore;
+      }
+      if (type.toLowerCase() === "top") {
+        return b.applicationCount - a.applicationCount;
+      }
+      if (type.toLowerCase() === "latest") {
+        return 0;
+      }
+      return 0;
+    }
+  );
+
+  const parsedLimit = Math.max(1, Math.min(100, Number(limit) || 10));
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, matchedScore.slice(0, parsedLimit), "All Jobs"));
 });
