@@ -33,16 +33,15 @@ companyRoute.route("/login").post(uploadLocal.none(), loginCompany);
 
 companyRoute.use(verifyJWTAuth, verifyRoleAccess("company"));
 
-companyRoute.route("/logout").post(companyLogOut);
 companyRoute
   .route("/profile")
   .get(companyProfile)
   .patch(updateCompanyProfileInfo);
-
 companyRoute
   .route("/profile/companyLogo")
   .patch(uploadLocal.single("companyLogo"), updateCompanyLogo);
 
+companyRoute.route("/logout").post(companyLogOut);
 companyRoute.route("/profile/password").patch(updateCompanyPassword);
 companyRoute.route("/profile/email").patch(updateCompanyEmail);
 companyRoute.route("/profile/verifyEmail").post(verifyCompanyEmail);

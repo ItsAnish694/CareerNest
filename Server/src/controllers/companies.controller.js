@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.util.js";
 import { ApiError } from "../utils/apiError.util.js";
 import { ApiResponse } from "../utils/apiResponse.util.js";
+import { searchDictionary } from "../utils/dictionary.util.js";
 import { uploadCloudinary } from "../utils/cloudinary.util.js";
 import { Company } from "../models/companies.model.js";
 import { sendEmail } from "../utils/nodemailer.util.js";
@@ -126,22 +127,13 @@ export const registerCompany = asyncHandler(async function (req, res) {
 
 export const verifyCompany = asyncHandler(async function (req, res) {
   const { token } = req.params;
-  const {
-    companyPhoneNumber,
-    companyDistrict,
-    companyCity,
-    companyArea,
-    industry,
-  } = req.body;
+  const { companyPhoneNumber, companyDistrict, companyCity, companyArea } =
+    req.body;
 
   if (
-    [
-      companyPhoneNumber,
-      industry,
-      companyDistrict,
-      companyCity,
-      companyArea,
-    ].some((val) => !val?.trim())
+    [companyPhoneNumber, companyDistrict, companyCity, companyArea].some(
+      (val) => !val?.trim()
+    )
   ) {
     throw new ApiError(
       400,
@@ -207,7 +199,6 @@ export const verifyCompany = asyncHandler(async function (req, res) {
   company.companyDistrict = companyDistrict;
   company.companyCity = companyCity;
   company.companyArea = companyArea;
-  company.industry = industry;
   company.isVerified = "Pending";
 
   await company.save();
@@ -334,7 +325,6 @@ export const updateCompanyProfileInfo = asyncHandler(async function (req, res) {
 
   const allowedFields = [
     "companyName",
-    "industry",
     "companyBio",
     "companyDistrict",
     "companyCity",
@@ -545,6 +535,16 @@ export const verifyCompanyEmail = asyncHandler(async function (req, res) {
 });
 
 export const createJobPosting = asyncHandler(async function (req, res) {
+  const companyID = req.user._id;
+
+  if (req.user.isVerified !== "Verified") {
+    throw new ApiError(
+      400,
+      "Unverified Company",
+      "You Can't Post Job Until Verified"
+    );
+  }
+
   const {
     jobTitle,
     jobDescription,
@@ -599,17 +599,20 @@ export const createJobPosting = asyncHandler(async function (req, res) {
     );
   }
 
+  const normalizedSkills = requiredSkills.map(
+    (skill) => searchDictionary.skillNormalizationMap[skill.toLowerCase()]
+  );
+
   const availableFields = {
     jobTitle,
     jobDescription,
-    requiredSkills,
+    requiredSkills: normalizedSkills,
     jobType,
     requiredExperience,
     experienceLevel,
     applicationDeadline,
     vacancies: Number(vacancies),
-    companyID: req.user._id,
-    relatedIndustry: req.user.industry,
+    companyID: companyID,
   };
 
   if (salary) availableFields.salary = salary;
@@ -859,6 +862,7 @@ export const companyDashboard = asyncHandler(async function (req, res) {
   ]);
 
   const allStats = {
+    totalJobPosting,
     totalApplications: 0,
     totalAcceptedApplications: 0,
     totalRejectedApplications: 0,

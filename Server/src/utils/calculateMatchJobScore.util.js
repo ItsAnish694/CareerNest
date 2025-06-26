@@ -29,13 +29,10 @@ export function calculateJobMatchScores(jobs = [], user) {
       user.city === job.companyInfo?.companyLocation?.city ? 100 : 0;
     const areaMatched =
       user.area === job.companyInfo?.companyLocation?.area ? 100 : 0;
-    const industryMatch =
-      job.relatedIndustry === user.interestedIndustry.toLowerCase() ? 100 : 0;
 
     const totalMatchedScore =
       skillMatchedPercent * 0.6 +
-      experiencedMatchedPercent * 0.15 +
-      industryMatch * 0.16 +
+      experiencedMatchedPercent * 0.31 +
       districtMatched * 0.03 +
       cityMatched * 0.03 +
       areaMatched * 0.03;

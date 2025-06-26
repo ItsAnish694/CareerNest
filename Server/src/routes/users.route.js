@@ -6,9 +6,12 @@ import {
   applyJobApplication,
   deleteBookmarkJob,
   deleteJobApplication,
+  getAllBookmarks,
   getAllJobs,
+  getAppliedJobs,
   loginUser,
   registerUser,
+  searchJobs,
   updateEmail,
   updatePassword,
   updateProfileInfo,
@@ -19,7 +22,6 @@ import {
   userProfile,
   verifyEmail,
   verifyUser,
-  viewJobInfo,
 } from "../controllers/users.controller.js";
 import { uploadLocal } from "../middlewares/multer.middleware.js";
 
@@ -35,28 +37,35 @@ userRoute.route("/login").post(loginUser);
 
 userRoute.use(verifyJWTAuth, verifyRoleAccess("user"));
 
-userRoute.route("/logout").post(userLogOut);
-userRoute.route("/profile").get(userProfile).patch(updateProfileInfo);
-userRoute.route("/profile/skills").patch(updateUserSkills);
-
+//Profile Related Routes
 userRoute
   .route("/profile/profilePic")
   .patch(uploadLocal.single("profilePic"), updateProfilePicture);
 userRoute
   .route("/profile/resume")
   .patch(uploadLocal.single("resume"), updateResume);
-
 userRoute.route("/profile/password").patch(updatePassword);
 userRoute.route("/profile/email").patch(updateEmail);
 userRoute.route("/profile/verifyEmail").post(verifyEmail);
-userRoute.route("/jobs").get(getAllJobs);
+userRoute.route("/profile").get(userProfile).patch(updateProfileInfo);
+userRoute.route("/profile/skills").patch(updateUserSkills);
 
+//Application Related Routes
 userRoute
-  .route("/jobs/:id")
-  .get(viewJobInfo)
+  .route("/applications/:jobID")
   .post(applyJobApplication)
   .delete(deleteJobApplication);
+userRoute.route("/applications").get(getAppliedJobs);
 
-userRoute.route("/bookmark/:id").post(addBookmarkJob).delete(deleteBookmarkJob);
+//Bookmark Related Routes
+userRoute
+  .route("/bookmarks/:jobID")
+  .post(addBookmarkJob)
+  .delete(deleteBookmarkJob);
+userRoute.route("/bookmarks").get(getAllBookmarks);
+
+userRoute.route("/search").get(searchJobs);
+userRoute.route("/jobs").get(getAllJobs);
+userRoute.route("/logout").post(userLogOut);
 
 export { userRoute };

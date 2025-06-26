@@ -10,6 +10,7 @@ import {
 } from "../utils/cloudinary.util.js";
 import { calculateJobMatchScores } from "../utils/calculateMatchJobScore.util.js";
 import { sendEmail } from "../utils/nodemailer.util.js";
+import { searchDictionary } from "../utils/dictionary.util.js";
 import { User } from "../models/users.model.js";
 import { Job } from "../models/jobs.model.js";
 import { Application } from "../models/applications.model.js";
@@ -76,7 +77,7 @@ export const registerUser = asyncHandler(async function (req, res) {
     }
     const profilePicture = uploadedProfilePic.secure_url;
     user.profilePicture = profilePicture;
-    user.save({ validateBeforeSave: false });
+    await user.save({ validateBeforeSave: false });
   }
   const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, {
     expiresIn: "1d",
@@ -117,6 +118,7 @@ export const registerUser = asyncHandler(async function (req, res) {
   const emailSent = await sendEmail(email, mailBody, "Email Verification");
 
   if (!emailSent) {
+    await User.findByIdAndDelete(user._id);
     throw new ApiError(500, "Email Error", "Cant Send The Email");
   }
 
@@ -134,25 +136,13 @@ export const registerUser = asyncHandler(async function (req, res) {
 export const verifyUser = asyncHandler(async function (req, res) {
   const { token } = req.params;
 
-  const {
-    skills,
-    phoneNumber,
-    district,
-    city,
-    area,
-    experiencedYears,
-    interestedIndustry,
-  } = req.body;
+  const { skills, phoneNumber, district, city, area, experiencedYears } =
+    req.body;
 
   if (
-    [
-      phoneNumber,
-      district,
-      city,
-      area,
-      experiencedYears,
-      interestedIndustry,
-    ].some((val) => !val?.trim())
+    [phoneNumber, district, city, area, experiencedYears].some(
+      (val) => !val?.trim()
+    )
   ) {
     throw new ApiError(
       400,
@@ -213,13 +203,16 @@ export const verifyUser = asyncHandler(async function (req, res) {
   if (!uploadedResume)
     throw new ApiError(500, "Upload Failed", "Error Uploading The Resume File");
 
+  const normalizedSkills = skills.map(
+    (skill) => searchDictionary.skillNormalizationMap[skill.toLowerCase()]
+  );
+
   user.resumeLink = uploadedResume.secure_url;
-  user.skills = skills;
+  user.skills = normalizedSkills;
   user.phoneNumber = phoneNumber;
   user.city = city;
   user.district = district;
   user.area = area;
-  user.interestedIndustry = interestedIndustry;
   user.experiencedYears = experiencedYears;
   user.isVerified = true;
 
@@ -355,7 +348,6 @@ export const updateProfileInfo = asyncHandler(async function (req, res) {
     "district",
     "city",
     "area",
-    "interestedIndustry",
   ];
 
   const userId = req.user?._id;
@@ -391,8 +383,10 @@ export const updateProfileInfo = asyncHandler(async function (req, res) {
 export const updateUserSkills = asyncHandler(async function (req, res) {
   const { skills } = req.body;
 
-  if (!Array.isArray(skills) || skills.length === 0 || skills[0] === "")
-    throw new ApiError(400, "Please Provide Some Skills");
+  const validSkills = skills.filter((skill) => skill.trim() !== "");
+  if (validSkills.length === 0)
+    throw new ApiError(400, "No valid skills provided");
+
   if (skills.length > 20) throw new ApiError(400, "Too Much Skill");
 
   const userID = req.user?._id;
@@ -440,7 +434,7 @@ export const updateProfilePicture = asyncHandler(async function (req, res) {
 
   if (
     user.profilePicture.length > 0 &&
-    !user.profilePicture.includes("yhfkchms5dvz9we2nvga.png")
+    !user.profilePicture.endsWith("yhfkchms5dvz9we2nvga.png")
   ) {
     await deleteCloudinary(user.profilePicture);
   }
@@ -528,7 +522,7 @@ export const updatePassword = asyncHandler(async function (req, res) {
 
   user.password = updatedPassword;
   user.refreshToken = undefined;
-  user.save({ validateBeforeSave: true });
+  user.save();
 
   const options = {
     httpOnly: true,
@@ -578,7 +572,7 @@ export const updateEmail = asyncHandler(async function (req, res) {
     }
   );
 
-  const mailBody = `<a href="http://127.0.0.1:3000/api/v1/user/verifyemail?token=${token}">Verify Email</a>`;
+  const mailBody = `<a href="${process.env.CORS_ORIGIN}/user/verifyemail?token=${token}">Verify Email</a>`;
 
   await sendEmail(trimmedEmail, mailBody, "Email Update");
 
@@ -611,7 +605,7 @@ export const verifyEmail = asyncHandler(async function (req, res) {
   }
 
   user.email = decodedToken.email;
-  await user.save({ validateBeforeSave: false });
+  await user.save();
 
   return res
     .status(200)
@@ -619,7 +613,7 @@ export const verifyEmail = asyncHandler(async function (req, res) {
 });
 
 export const applyJobApplication = asyncHandler(async function (req, res) {
-  const jobID = req.params.id;
+  const jobID = req.params.jobID;
   const userID = req.user._id;
 
   if (!mongoose.isValidObjectId(jobID) || !mongoose.isValidObjectId(userID))
@@ -666,7 +660,7 @@ export const applyJobApplication = asyncHandler(async function (req, res) {
 });
 
 export const deleteJobApplication = asyncHandler(async function (req, res) {
-  const jobID = req.params.id;
+  const jobID = req.params.jobID;
   const userID = req.user._id;
 
   if (!mongoose.isValidObjectId(jobID) || !mongoose.isValidObjectId(userID))
@@ -689,81 +683,8 @@ export const deleteJobApplication = asyncHandler(async function (req, res) {
     .json(new ApiResponse(200, null, "Removed Application"));
 });
 
-export const viewJobInfo = asyncHandler(async function (req, res) {
-  const jobID = req.params.id;
-  const userID = req.user?._id;
-
-  if (!jobID) throw new ApiError(404, "No Job Id", "Please Provide Job Id");
-
-  if (!mongoose.isValidObjectId(jobID)) {
-    throw new ApiError(400, "Invalid Job ID", "Job ID format is not valid");
-  }
-
-  if (!mongoose.isValidObjectId(userID)) {
-    throw new ApiError(400, "Invalid User ID", "User ID format is not valid");
-  }
-
-  const user = await User.findById(userID)
-    .select("skills experiencedYears interestedIndustry district city area")
-    .lean();
-
-  if (!user) throw new ApiError(404, "User Not Found");
-
-  const jobInfo = await Job.aggregate([
-    {
-      $match: { _id: new mongoose.Types.ObjectId(jobID) },
-    },
-    {
-      $lookup: {
-        from: "companies",
-        localField: "companyID",
-        foreignField: "_id",
-        as: "companyInfo",
-      },
-    },
-    {
-      $unwind: {
-        path: "$companyInfo",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        jobTitle: 1,
-        jobDescription: 1,
-        requiredSkills: 1,
-        jobType: 1,
-        requiredExperience: 1,
-        experienceLevel: 1,
-        salary: 1,
-        vacancies: 1,
-        applicationDeadline: 1,
-        applicationCount: 1,
-        createdAt: 1,
-        relatedIndustry: 1,
-        companyInfo: {
-          companyName: "$companyInfo.companyName",
-          companyLocation: {
-            district: "$companyInfo.companyDistrict",
-            city: "$companyInfo.companyCity",
-            area: "$companyInfo.companyArea",
-          },
-          companyBio: "$companyInfo.companyBio",
-        },
-      },
-    },
-  ]);
-
-  const matchedJobs = calculateJobMatchScores(jobInfo, user);
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, matchedJobs[0], "Job Details"));
-});
-
 export const addBookmarkJob = asyncHandler(async function (req, res) {
-  const jobID = req.params.id;
+  const jobID = req.params.jobID;
   const userID = req.user._id;
 
   if (!(mongoose.isValidObjectId(jobID) && mongoose.isValidObjectId(userID))) {
@@ -796,7 +717,7 @@ export const addBookmarkJob = asyncHandler(async function (req, res) {
 });
 
 export const deleteBookmarkJob = asyncHandler(async function (req, res) {
-  const jobID = req.params.id;
+  const jobID = req.params.jobID;
   const userID = req.user._id;
 
   if (!(mongoose.isValidObjectId(jobID) && mongoose.isValidObjectId(userID))) {
@@ -824,39 +745,201 @@ export const deleteBookmarkJob = asyncHandler(async function (req, res) {
     .json(new ApiResponse(200, deleteBookmark, "Successfully Deleted"));
 });
 
-export const getAllJobs = asyncHandler(async function (req, res) {
-  const industry = req.user.interestedIndustry.toLowerCase();
-  const userID = req.user._id;
-  const { type = "recommended", limit = "10" } = req.query;
+export const getAllBookmarks = asyncHandler(async function (req, res) {
+  const user = req.user;
+  const limit = Number(req.query.limit) || 10;
+  const page = Number(req.query.page) || 1;
+  const skip = (page - 1) * limit;
 
-  if (!mongoose.isValidObjectId(userID)) {
+  if (!mongoose.isValidObjectId(user._id)) {
     throw new ApiError(
       400,
-      "Not A Valid Id",
-      "The ID You Provided Is Not Valid"
+      "Invalid User ID",
+      "The Id You Provided Is Invalid"
     );
   }
 
-  const user = await User.findById(userID)
-    .select("skills experiencedYears interestedIndustry district city area")
-    .lean();
+  const bookMarkedJobs = await Bookmark.aggregate([
+    {
+      $match: { userID: new mongoose.Types.ObjectId(user._id) },
+    },
+    {
+      $sort: { createdAt: -1 },
+    },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: "jobs",
+        localField: "jobID",
+        foreignField: "_id",
+        as: "jobInfo",
+      },
+    },
+    {
+      $unwind: {
+        path: "$jobInfo",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: "companies",
+        foreignField: "_id",
+        localField: "jobInfo.companyID",
+        as: "companyInfo",
+      },
+    },
+    {
+      $unwind: {
+        path: "$companyInfo",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        _id: "$jobInfo._id",
+        jobTitle: "$jobInfo.jobTitle",
+        jobDescription: "$jobInfo.jobDescription",
+        jobType: "$jobInfo.jobType",
+        experienceLevel: "$jobInfo.experienceLevel",
+        salary: "$jobInfo.salary",
+        vacancies: "$jobInfo.vacancies",
+        applicationDeadline: "$jobInfo.applicationDeadline",
+        applicationCount: "$jobInfo.applicationCount",
+        createdAt: "$jobInfo.createdAt",
+        requiredSkills: "$jobInfo.requiredSkills",
+        requiredExperience: "$jobInfo.requiredExperience",
+        companyInfo: {
+          companyName: "$companyInfo.companyName",
+          companyLocation: {
+            district: "$companyInfo.companyDistrict",
+            city: "$companyInfo.companyCity",
+            area: "$companyInfo.companyArea",
+          },
+          companyBio: "$companyInfo.companyBio",
+        },
+      },
+    },
+  ]);
 
-  if (!user) {
+  const jobsWithScore = calculateJobMatchScores(bookMarkedJobs, user);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, jobsWithScore, "Bookmarked Jobs"));
+});
+
+export const getAppliedJobs = asyncHandler(async function (req, res) {
+  const user = req.user;
+  const limit = Number(req.query.limit) || 10;
+  const page = Number(req.query.page) || 1;
+  const skip = (page - 1) * limit;
+
+  if (!mongoose.isValidObjectId(user._id)) {
     throw new ApiError(
-      404,
-      "User Not Found",
-      "The User You Trying To Find Doesn't Exists"
+      400,
+      "Invalid User ID",
+      "The Id You Provided Is Invalid"
     );
   }
+
+  const appliedJobs = await Application.aggregate([
+    {
+      $match: { userID: new mongoose.Types.ObjectId(user._id) },
+    },
+    { $skip: skip },
+    {
+      $sort: { createdAt: -1 },
+    },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: "jobs",
+        localField: "jobID",
+        foreignField: "_id",
+        as: "jobInfo",
+      },
+    },
+    {
+      $unwind: { path: "$jobInfo", preserveNullAndEmptyArrays: true },
+    },
+    {
+      $lookup: {
+        from: "companies",
+        foreignField: "_id",
+        localField: "jobInfo.companyID",
+        as: "companyInfo",
+      },
+    },
+    {
+      $unwind: { path: "$companyInfo", preserveNullAndEmptyArrays: true },
+    },
+    {
+      $project: {
+        status: 1,
+        _id: "$jobInfo._id",
+        jobTitle: "$jobInfo.jobTitle",
+        jobDescription: "$jobInfo.jobDescription",
+        jobType: "$jobInfo.jobType",
+        experienceLevel: "$jobInfo.experienceLevel",
+        salary: "$jobInfo.salary",
+        vacancies: "$jobInfo.vacancies",
+        applicationDeadline: "$jobInfo.applicationDeadline",
+        applicationCount: "$jobInfo.applicationCount",
+        createdAt: "$jobInfo.createdAt",
+        requiredSkills: "$jobInfo.requiredSkills",
+        requiredExperience: "$jobInfo.requiredExperience",
+        companyInfo: {
+          companyName: "$companyInfo.companyName",
+          companyLocation: {
+            district: "$companyInfo.companyDistrict",
+            city: "$companyInfo.companyCity",
+            area: "$companyInfo.companyArea",
+          },
+          companyBio: "$companyInfo.companyBio",
+        },
+      },
+    },
+  ]);
+
+  const jobsWithScore = calculateJobMatchScores(appliedJobs, user);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, jobsWithScore, "All Applied Jobs"));
+});
+
+export const getAllJobs = asyncHandler(async function (req, res) {
+  const userInfo = req.user;
+  const { type = "recommended", limit = "10", page = "1" } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  if (!userInfo.skills || !userInfo.skills.length) {
+    return res
+      .status(400)
+      .json(
+        new ApiResponse(400, [], "User skills are required for recommendations")
+      );
+  }
+
+  const sort = {
+    recommended: { createdAt: -1 },
+    top: { applicationCount: -1 },
+    latest: { createdAt: -1 },
+  };
+  const aggregationLimit = type === "recommended" ? 100 : Number(limit);
 
   const getAllJobs = await Job.aggregate([
     {
       $match: {
-        relatedIndustry: industry,
+        applicationDeadline: { $gte: new Date() },
+        requiredSkills: { $in: userInfo.skills },
       },
     },
-    { $sort: { createdAt: -1 } },
-    { $limit: 100 },
+    { $sort: sort[type] || { createdAt: -1 } },
+    { $skip: skip },
+    { $limit: aggregationLimit },
     {
       $lookup: {
         from: "companies",
@@ -885,7 +968,6 @@ export const getAllJobs = asyncHandler(async function (req, res) {
         applicationDeadline: 1,
         applicationCount: 1,
         createdAt: 1,
-        relatedIndustry: 1,
         companyInfo: {
           companyName: "$companyInfo.companyName",
           companyLocation: {
@@ -903,24 +985,132 @@ export const getAllJobs = asyncHandler(async function (req, res) {
     return res.status(200).json(new ApiResponse(200, [], "No jobs available"));
   }
 
-  const matchedScore = calculateJobMatchScores(getAllJobs, user).sort(
-    (a, b) => {
-      if (type.toLowerCase() === "recommended") {
-        return b.totalMatchedScore - a.totalMatchedScore;
-      }
-      if (type.toLowerCase() === "top") {
-        return b.applicationCount - a.applicationCount;
-      }
-      if (type.toLowerCase() === "latest") {
-        return 0;
-      }
-      return 0;
-    }
-  );
+  const datawithMatchedScore = calculateJobMatchScores(getAllJobs, userInfo);
 
-  const parsedLimit = Math.max(1, Math.min(100, Number(limit) || 10));
+  let data = [];
+
+  if (type === "recommended") {
+    data = datawithMatchedScore
+      .sort((a, b) => {
+        const maxSort = b.totalMatchedScore * 0.7 + b.applicationCount * 0.3;
+        const minSort = a.totalMatchedScore * 0.7 + a.applicationCount * 0.3;
+        return maxSort - minSort;
+      })
+      .slice(0, Number(limit));
+  } else {
+    data = datawithMatchedScore;
+  }
+
+  res.status(200).json(new ApiResponse(200, data, "All Jobs"));
+});
+
+export const searchJobs = asyncHandler(async function (req, res) {
+  const q = req.query.q;
+  const userInfo = req.user;
+
+  const { limit = "10", page = "1" } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+  const aggregationLimit = 100;
+  const queryArray = q
+    .split(" ")
+    .map((val) => val.trim().toLowerCase())
+    .filter((query) => query !== "");
+
+  const categories = [
+    "requiredSkills",
+    "experienceLevel",
+    "jobType",
+    "districts",
+  ];
+
+  const matchObjects = [];
+
+  for (const categorie of categories) {
+    matchObjects.push(
+      ...searchDictionary[categorie]
+        .filter((dictionaryValue) =>
+          queryArray.some((val) => dictionaryValue.startsWith(val))
+        )
+        .map((filteredValue) => ({
+          [categorie]: new RegExp(`^${filteredValue}`, "i"),
+        }))
+    );
+  }
+
+  if (!(matchObjects.length > 0)) {
+    throw new ApiError(
+      404,
+      "No Jobs Found",
+      "There Are No Jobs Related To The Search"
+    );
+  }
+
+  const searchedJobs = await Job.aggregate([
+    {
+      $match: {
+        $or: matchObjects,
+        applicationDeadline: { $gte: new Date() },
+      },
+    },
+    {
+      $sort: { createdAt: -1 },
+    },
+    { $skip: skip },
+    {
+      $limit: aggregationLimit,
+    },
+    {
+      $lookup: {
+        from: "companies",
+        foreignField: "_id",
+        localField: "companyID",
+        as: "companyInfo",
+      },
+    },
+    {
+      $unwind: {
+        path: "$companyInfo",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        jobTitle: 1,
+        jobDescription: 1,
+        requiredSkills: 1,
+        jobType: 1,
+        requiredExperience: 1,
+        experienceLevel: 1,
+        salary: 1,
+        vacancies: 1,
+        applicationDeadline: 1,
+        applicationCount: 1,
+        createdAt: 1,
+        companyInfo: {
+          companyName: "$companyInfo.companyName",
+          companyLocation: {
+            district: "$companyInfo.companyDistrict",
+            city: "$companyInfo.companyCity",
+            area: "$companyInfo.companyArea",
+          },
+          companyBio: "$companyInfo.companyBio",
+        },
+      },
+    },
+  ]);
+
+  if (!(searchJobs.length > 0)) {
+    throw new ApiError(
+      404,
+      "No Jobs Found",
+      "There Are No Jobs Related To The Search"
+    );
+  }
+
+  const jobsWithMatchedScore = calculateJobMatchScores(searchedJobs, userInfo);
 
   res
     .status(200)
-    .json(new ApiResponse(200, matchedScore.slice(0, parsedLimit), "All Jobs"));
+    .json(new ApiResponse(200, jobsWithMatchedScore, "Searched Jobs"));
 });

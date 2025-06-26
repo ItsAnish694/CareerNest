@@ -11,6 +11,7 @@ const jobSchema = new Schema(
       required: true,
       trim: true,
       lowercase: true,
+      index: "text",
     },
     jobDescription: {
       type: String,
@@ -38,6 +39,7 @@ const jobSchema = new Schema(
       trim: true,
       lowercase: true,
       required: true,
+      index: 1,
     },
     requiredExperience: {
       type: String,
@@ -46,18 +48,14 @@ const jobSchema = new Schema(
     },
     experienceLevel: {
       type: String,
-      enum: ["entry level", "mid level", "senior level"],
+      enum: ["entry-level", "mid-level", "senior-level"],
       lowercase: true,
+      index: 1,
     },
     salary: {
       type: String,
       default: "Negotiable",
       trim: true,
-    },
-    relatedIndustry: {
-      type: String,
-      tirm: true,
-      lowercase: true,
     },
     vacancies: {
       type: Number,
