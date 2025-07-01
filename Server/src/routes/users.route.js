@@ -7,8 +7,9 @@ import {
   deleteBookmarkJob,
   deleteJobApplication,
   getAllBookmarks,
-  getAllJobs,
+  getAllJobsDetails,
   getAppliedJobs,
+  homePage,
   loginUser,
   registerUser,
   searchJobs,
@@ -65,7 +66,8 @@ userRoute
 userRoute.route("/bookmarks").get(getAllBookmarks);
 
 userRoute.route("/search").get(searchJobs);
-userRoute.route("/jobs").get(getAllJobs);
+userRoute.route("/home").get(homePage);
+userRoute.route("/jobs").get(getAllJobsDetails);
 userRoute.route("/logout").post(userLogOut);
 
 export { userRoute };

@@ -13,7 +13,7 @@ const userSchema = new Schema(
       type: String,
       trim: true,
       default:
-        "https://res.cloudinary.com/dcsgpah7o/raw/upload/v1750015844/yhfkchms5dvz9we2nvga.png",
+        "https://res.cloudinary.com/dcsgpah7o/image/upload/v1751301683/ChatGPT_Image_Jun_16_2025_01_15_18_AM_jap5gt.png",
     },
     email: {
       type: String,

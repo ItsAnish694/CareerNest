@@ -3,5 +3,6 @@ export class ApiResponse {
     this.status = status;
     this.data = data;
     this.message = message;
+    this.Success = true;
   }
 }

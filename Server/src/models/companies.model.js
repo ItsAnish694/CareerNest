@@ -13,7 +13,7 @@ const companySchema = new Schema(
       type: String,
       trim: true,
       default:
-        "https://res.cloudinary.com/dcsgpah7o/image/upload/v1749728727/y2vmdzxonqvfcxobngfc.png",
+        "https://res.cloudinary.com/dcsgpah7o/image/upload/v1751301683/ChatGPT_Image_Jun_16_2025_01_15_18_AM_jap5gt.png",
       required: true,
     },
     companyEmail: {

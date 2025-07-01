@@ -127,7 +127,7 @@ export const registerUser = asyncHandler(async function (req, res) {
     .json(
       new ApiResponse(
         200,
-        undefined,
+        null,
         "An Email Is Sent To Your Email Address Verify"
       )
     );
@@ -136,8 +136,8 @@ export const registerUser = asyncHandler(async function (req, res) {
 export const verifyUser = asyncHandler(async function (req, res) {
   const { token } = req.params;
 
-  const { skills, phoneNumber, district, city, area, experiencedYears } =
-    req.body;
+  const { phoneNumber, district, city, area, experiencedYears } = req.body;
+  const skills = JSON.parse(req.body.skills);
 
   if (
     [phoneNumber, district, city, area, experiencedYears].some(
@@ -220,17 +220,13 @@ export const verifyUser = asyncHandler(async function (req, res) {
 
   return res
     .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { redirectLink: `${process.env.CORS_ORIGIN}/user/login` },
-        "Verified Successfully"
-      )
-    );
+    .json(new ApiResponse(200, null, "Verified Successfully"));
 });
 
 export const loginUser = asyncHandler(async function (req, res) {
-  const { email, password } = req.body;
+  // const { email, password } = req.body;
+  const email = req.body?.userEmail;
+  const password = req.body?.userPassword;
 
   if ([password, email].some((val) => !val?.trim()))
     throw new ApiError(
@@ -255,11 +251,7 @@ export const loginUser = asyncHandler(async function (req, res) {
     throw new ApiError(404, "User Not Found", "User With This Email Not Found");
 
   if (!(await user.checkPassword(passwordTrimmed)))
-    throw new ApiError(
-      400,
-      "Wrong Password",
-      "The Provided Password is Invalid"
-    );
+    throw new ApiError(400, "Wrong Password", "The Provided Password is Wrong");
 
   if (!user.isVerified)
     throw new ApiError(
@@ -278,22 +270,13 @@ export const loginUser = asyncHandler(async function (req, res) {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "Lax", // for localHost
   };
 
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          redirLink: `${process.env.CORS_ORIGIN}/user/home`,
-        },
-        "Logged In Successfully"
-      )
-    );
+    .json(new ApiResponse(200, user, "Logged In Successfully"));
 });
 
 export const userLogOut = asyncHandler(async function (req, res) {
@@ -312,7 +295,6 @@ export const userLogOut = asyncHandler(async function (req, res) {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "Lax",
   };
 
   return res
@@ -327,7 +309,7 @@ export const userProfile = asyncHandler(async function (req, res) {
     throw new ApiError(400, "Unverified User");
 
   const userProfileInfo = await User.findById(req.user?._id).select(
-    "-refreshToken -password -isVerified"
+    "-refreshToken -password"
   );
 
   if (!userProfileInfo) throw new ApiError(404, "User Not Found");
@@ -366,7 +348,7 @@ export const updateProfileInfo = asyncHandler(async function (req, res) {
   const user = await User.findByIdAndUpdate(userId, updateFields, {
     runValidators: true,
     new: true,
-  });
+  }).select("-refreshToken -password -isVerified");
 
   if (!user)
     throw new ApiError(
@@ -381,7 +363,7 @@ export const updateProfileInfo = asyncHandler(async function (req, res) {
 });
 
 export const updateUserSkills = asyncHandler(async function (req, res) {
-  const { skills } = req.body;
+  const skills = req.body.skills;
 
   const validSkills = skills.filter((skill) => skill.trim() !== "");
   if (validSkills.length === 0)
@@ -391,26 +373,16 @@ export const updateUserSkills = asyncHandler(async function (req, res) {
 
   const userID = req.user?._id;
 
-  const skillsToAdd = [],
-    skillsToRemove = [];
-  for (const skill of skills) {
-    const trimmedSkill = skill.trim().toLowerCase();
-
-    if (trimmedSkill === "") {
-      continue;
-    }
-    if (trimmedSkill.startsWith("#"))
-      skillsToRemove.push(trimmedSkill.slice(1));
-    else skillsToAdd.push(trimmedSkill);
-  }
-
-  const user = await User.findById(userID);
+  const user = await User.findById(userID).select(
+    "-refreshToken -password -isVerified"
+  );
 
   if (!user) throw new ApiError(404, "User Not Found");
+  const normalizedSkills = skills.map(
+    (skill) => searchDictionary.skillNormalizationMap[skill.toLowerCase()]
+  );
 
-  user.skills = user.skills.filter((skill) => !skillsToRemove.includes(skill));
-
-  user.skills = Array.from(new Set([...user.skills, ...skillsToAdd]));
+  user.skills = normalizedSkills;
 
   await user.save();
 
@@ -434,7 +406,9 @@ export const updateProfilePicture = asyncHandler(async function (req, res) {
 
   if (
     user.profilePicture.length > 0 &&
-    !user.profilePicture.endsWith("yhfkchms5dvz9we2nvga.png")
+    !user.profilePicture.endsWith(
+      "ChatGPT_Image_Jun_16_2025_01_15_18_AM_jap5gt.png"
+    )
   ) {
     await deleteCloudinary(user.profilePicture);
   }
@@ -561,7 +535,7 @@ export const updateEmail = asyncHandler(async function (req, res) {
 
   const existingUser = await User.findOne({ email: trimmedEmail });
   if (existingUser) {
-    throw new ApiError(400, "Email Already Taken");
+    throw new ApiError(400, "Existing Email", "Email Already Taken");
   }
 
   const token = jwt.sign(
@@ -740,24 +714,26 @@ export const deleteBookmarkJob = asyncHandler(async function (req, res) {
 
   await User.findByIdAndUpdate(userID, { $inc: { bookmarkCount: -1 } });
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, deleteBookmark, "Successfully Deleted"));
+  res.status(200).json(new ApiResponse(200, null, "Successfully Deleted"));
 });
 
 export const getAllBookmarks = asyncHandler(async function (req, res) {
-  const user = req.user;
+  const userID = req.user._id;
   const limit = Number(req.query.limit) || 10;
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * limit;
 
-  if (!mongoose.isValidObjectId(user._id)) {
+  if (!mongoose.isValidObjectId(userID)) {
     throw new ApiError(
       400,
       "Invalid User ID",
       "The Id You Provided Is Invalid"
     );
   }
+
+  const user = await User.findById(userID)
+    .select("-password -refreshToken")
+    .lean();
 
   const bookMarkedJobs = await Bookmark.aggregate([
     {
@@ -818,6 +794,7 @@ export const getAllBookmarks = asyncHandler(async function (req, res) {
             area: "$companyInfo.companyArea",
           },
           companyBio: "$companyInfo.companyBio",
+          companyLogo: "$companyInfo.companyLogo",
         },
       },
     },
@@ -825,24 +802,27 @@ export const getAllBookmarks = asyncHandler(async function (req, res) {
 
   const jobsWithScore = calculateJobMatchScores(bookMarkedJobs, user);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, jobsWithScore, "Bookmarked Jobs"));
+  return res.status(200).json(new ApiResponse(200, jobsWithScore, ""));
 });
 
 export const getAppliedJobs = asyncHandler(async function (req, res) {
-  const user = req.user;
   const limit = Number(req.query.limit) || 10;
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * limit;
 
-  if (!mongoose.isValidObjectId(user._id)) {
+  const userID = req.user._id;
+
+  if (!mongoose.isValidObjectId(userID)) {
     throw new ApiError(
       400,
       "Invalid User ID",
       "The Id You Provided Is Invalid"
     );
   }
+
+  const user = await User.findById(userID)
+    .select("-password -refreshToken")
+    .lean();
 
   const appliedJobs = await Application.aggregate([
     {
@@ -897,6 +877,7 @@ export const getAppliedJobs = asyncHandler(async function (req, res) {
             city: "$companyInfo.companyCity",
             area: "$companyInfo.companyArea",
           },
+          companyLogo: "$companyInfo.companyLogo",
           companyBio: "$companyInfo.companyBio",
         },
       },
@@ -905,22 +886,32 @@ export const getAppliedJobs = asyncHandler(async function (req, res) {
 
   const jobsWithScore = calculateJobMatchScores(appliedJobs, user);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, jobsWithScore, "All Applied Jobs"));
+  return res.status(200).json(new ApiResponse(200, jobsWithScore, ""));
 });
 
-export const getAllJobs = asyncHandler(async function (req, res) {
-  const userInfo = req.user;
+export const getAllJobsDetails = asyncHandler(async function (req, res) {
   const { type = "recommended", limit = "10", page = "1" } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
 
-  if (!userInfo.skills || !userInfo.skills.length) {
-    return res
-      .status(400)
-      .json(
-        new ApiResponse(400, [], "User skills are required for recommendations")
-      );
+  const userID = req.user._id;
+  const userInfo = await User.findById(userID)
+    .select("-password -refreshToken")
+    .lean();
+
+  if (userInfo) {
+    if (!userInfo.skills || !userInfo.skills.length) {
+      if (type === "recommended") {
+        return res
+          .status(400)
+          .json(
+            new ApiResponse(
+              400,
+              [],
+              "User skills are required for recommendations"
+            )
+          );
+      }
+    }
   }
 
   const sort = {
@@ -934,7 +925,6 @@ export const getAllJobs = asyncHandler(async function (req, res) {
     {
       $match: {
         applicationDeadline: { $gte: new Date() },
-        requiredSkills: { $in: userInfo.skills },
       },
     },
     { $sort: sort[type] || { createdAt: -1 } },
@@ -975,6 +965,7 @@ export const getAllJobs = asyncHandler(async function (req, res) {
             city: "$companyInfo.companyCity",
             area: "$companyInfo.companyArea",
           },
+          companyLogo: "$companyInfo.companyLogo",
           companyBio: "$companyInfo.companyBio",
         },
       },
@@ -1001,14 +992,12 @@ export const getAllJobs = asyncHandler(async function (req, res) {
     data = datawithMatchedScore;
   }
 
-  res.status(200).json(new ApiResponse(200, data, "All Jobs"));
+  res.status(200).json(new ApiResponse(200, data, ""));
 });
 
 export const searchJobs = asyncHandler(async function (req, res) {
-  const q = req.query.q;
-  const userInfo = req.user;
-
-  const { limit = "10", page = "1" } = req.query;
+  const { q, limit = "10", page = "1" } = req.query;
+  const userID = req.user._id;
   const skip = (Number(page) - 1) * Number(limit);
   const aggregationLimit = 100;
   const queryArray = q
@@ -1044,6 +1033,18 @@ export const searchJobs = asyncHandler(async function (req, res) {
       "There Are No Jobs Related To The Search"
     );
   }
+
+  if (!mongoose.isValidObjectId(userID)) {
+    throw new ApiError(
+      400,
+      "Invalid User ID",
+      "The Id You Provided Is Invalid"
+    );
+  }
+
+  const userInfo = await User.findById(userID)
+    .select("-refreshToken -password")
+    .lean();
 
   const searchedJobs = await Job.aggregate([
     {
@@ -1094,6 +1095,7 @@ export const searchJobs = asyncHandler(async function (req, res) {
             city: "$companyInfo.companyCity",
             area: "$companyInfo.companyArea",
           },
+          companyLogo: "$companyInfo.companyLogo",
           companyBio: "$companyInfo.companyBio",
         },
       },
@@ -1110,7 +1112,13 @@ export const searchJobs = asyncHandler(async function (req, res) {
 
   const jobsWithMatchedScore = calculateJobMatchScores(searchedJobs, userInfo);
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, jobsWithMatchedScore, "Searched Jobs"));
+  res.status(200).json(new ApiResponse(200, jobsWithMatchedScore, ""));
+});
+
+export const homePage = asyncHandler(async function (req, res) {
+  const isLoggedIn = req?.user;
+  if (!isLoggedIn) {
+    throw new ApiError(400, "User Not Logged In");
+  }
+  return res.status(200).json(new ApiResponse(200, null, "User Is Logged In"));
 });

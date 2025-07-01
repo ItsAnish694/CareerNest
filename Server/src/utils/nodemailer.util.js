@@ -20,7 +20,6 @@ export const sendEmail = async (receiver, mailBody, subject) => {
     await transporter.sendMail(mailOptions);
     return true;
   } catch (err) {
-    console.error("Failed to send email:", err); // Logging added
     return false;
   }
 };

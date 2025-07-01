@@ -309,7 +309,7 @@ export const companyProfile = asyncHandler(async function (req, res) {
     throw new ApiError(400, "Unverified User");
 
   const companyProfileInfo = await Company.findById(req.user?._id).select(
-    "-refreshToken -password -isVerified"
+    "-refreshToken -password"
   );
 
   if (!companyProfileInfo) throw new ApiError(404, "Company Not Found");
@@ -381,7 +381,7 @@ export const updateCompanyLogo = asyncHandler(async function (req, res) {
     throw new ApiError(500, "Failed to upload company logo");
 
   // Delete old logo if it's not the default
-  const defaultLogoName = "y2vmdzxonqvfcxobngfc.png";
+  const defaultLogoName = "ChatGPT_Image_Jun_16_2025_01_15_18_AM_jap5gt.png";
   if (
     company.companyLogo &&
     company.companyLogo.length > 0 &&
@@ -548,8 +548,8 @@ export const createJobPosting = asyncHandler(async function (req, res) {
   const {
     jobTitle,
     jobDescription,
-    requiredSkills,
     jobType,
+    requiredSkills,
     requiredExperience,
     experienceLevel,
     salary,
