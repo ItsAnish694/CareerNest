@@ -56,11 +56,11 @@ function App() {
           <Route path="/company/verify/:token" element={<VerifyCompany />} />
           <Route path="/user/verifyemail" element={<VerifyUserEmail />} />
           <Route path="/company/verifyemail" element={<VerifyCompanyEmail />} />
-          <Route path="/jobs" element={<JobListing />} />{" "}
+          <Route path="/jobs" element={<JobListing />} />
           {/* All jobs for non-logged-in as well */}
-          <Route path="/jobs/:jobId" element={<JobDetails />} />{" "}
+          <Route path="/jobs/:jobId" element={<JobDetails />} />
           {/* Job details for non-logged-in as well */}
-          <Route path="/search" element={<JobListing />} />{" "}
+          <Route path="/search" element={<JobListing />} />
           {/* Search results displayed on job listing page */}
           {/* User Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["user"]} />}>

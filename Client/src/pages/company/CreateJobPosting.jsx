@@ -1,9 +1,8 @@
 import React, { useState, useContext } from "react";
 import api from "../../services/api";
-import { useNavigate, Link } from "react-router-dom"; // Import Link
+import { useNavigate, Link } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { AuthContext } from "../../contexts/AuthContext";
-import { toast } from "react-toastify";
 
 const jobTypeOptions = [
   "full time",
@@ -13,70 +12,92 @@ const jobTypeOptions = [
   "freelance",
   "remote",
 ];
+
 const experienceLevelOptions = ["entry-level", "mid-level", "senior-level"];
+
+const experienceYearsOptions = [
+  "Fresh Graduate",
+  "1 year",
+  "2 years",
+  "3 years",
+  "4 years",
+  "5 years",
+  "6 years",
+  "7 years",
+  "8 years",
+  "9 years",
+  "10+ years",
+];
 
 function CreateJobPosting() {
   const { company, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [jobTitle, setJobTitle] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
-  const [requiredSkills, setRequiredSkills] = useState(""); // Comma separated
-  const [jobType, setJobType] = useState("full time");
-  const [requiredExperience, setRequiredExperience] = useState("");
-  const [experienceLevel, setExperienceLevel] = useState("entry-level");
-  const [salary, setSalary] = useState("");
-  const [vacancies, setVacancies] = useState(1);
-  const [applicationDeadline, setApplicationDeadline] = useState("");
+  const [form, setForm] = useState({
+    jobTitle: "",
+    jobDescription: "",
+    requiredSkills: "",
+    jobType: "full time",
+    requiredExperience: "Fresh Graduate",
+    experienceLevel: "entry-level",
+    salary: "",
+    vacancies: 1,
+    applicationDeadline: "",
+  });
   const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [id]: id === "vacancies" ? Math.max(1, Number(value)) : value,
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
     if (company.isVerified !== "Verified") {
-      toast.error("Your company must be verified to post jobs.");
       setLoading(false);
       return;
     }
 
-    const skillsArray = requiredSkills
+    const skillsArray = form.requiredSkills
       .split(",")
       .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-    if (skillsArray.length === 0) {
-      toast.error("Please provide at least one required skill.");
+      .filter(Boolean);
+
+    if (!skillsArray.length) {
       setLoading(false);
       return;
     }
 
-    const jobData = {
-      jobTitle,
-      jobDescription,
-      requiredSkills: skillsArray,
-      jobType,
-      requiredExperience,
-      experienceLevel,
-      salary: salary || "Negotiable", // Use default if empty
-      vacancies: Number(vacancies),
-      applicationDeadline,
-    };
+    setLoading(true);
 
     try {
+      const jobData = {
+        ...form,
+        requiredSkills: skillsArray,
+        salary: form.salary || "Negotiable",
+      };
+
       const response = await api.post("/company/jobs", jobData);
+
       if (response.data.Success) {
-        // toast.success is handled by interceptor
         navigate("/company/jobs");
       }
-    } catch (error) {
-      // toast.error is handled by interceptor
+    } catch {
+      // error handled by interceptor
     } finally {
       setLoading(false);
     }
   };
 
-  if (authLoading) {
-    return <LoadingSpinner />;
-  }
+  if (authLoading)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    );
 
   if (!company || company.isVerified !== "Verified") {
     return (
@@ -86,8 +107,8 @@ function CreateJobPosting() {
           Your company account must be verified to create job postings.
         </p>
         <p className="text-gray-700 mb-6">
-          Please ensure your company profile verification is complete and
-          approved.
+          Please complete and get approval for your company profile
+          verification.
         </p>
         <Link
           to="/company/profile"
@@ -105,172 +126,135 @@ function CreateJobPosting() {
         Create New Job Posting
       </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="jobTitle"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Job Title
-          </label>
-          <input
-            type="text"
-            id="jobTitle"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="jobDescription"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Job Description
-          </label>
-          <textarea
-            id="jobDescription"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[150px]"
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            required
-            disabled={loading}
-          ></textarea>
-        </div>
-        <div>
-          <label
-            htmlFor="requiredSkills"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Required Skills (comma-separated, e.g., React, Node.js, SQL)
-          </label>
-          <input
-            type="text"
-            id="requiredSkills"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={requiredSkills}
-            onChange={(e) => setRequiredSkills(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="jobType"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Job Type
-          </label>
-          <select
-            id="jobType"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none custom-select-arrow"
-            value={jobType}
-            onChange={(e) => setJobType(e.target.value)}
-            required
-            disabled={loading}
-          >
-            {jobTypeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option.charAt(0).toUpperCase() + option.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="requiredExperience"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Required Experience (e.g., 2+ years, Fresh Graduate)
-          </label>
-          <input
-            type="text"
-            id="requiredExperience"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={requiredExperience}
-            onChange={(e) => setRequiredExperience(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="experienceLevel"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Experience Level
-          </label>
-          <select
-            id="experienceLevel"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none custom-select-arrow"
-            value={experienceLevel}
-            onChange={(e) => setExperienceLevel(e.target.value)}
-            required
-            disabled={loading}
-          >
-            {experienceLevelOptions.map((option) => (
-              <option key={option} value={option}>
-                {option
-                  .split("-")
-                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                  .join(" ")}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="salary"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Salary (Optional, e.g., $50,000 - $70,000 per year)
-          </label>
-          <input
-            type="text"
-            id="salary"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={salary}
-            onChange={(e) => setSalary(e.target.value)}
-            disabled={loading}
-            placeholder="e.g., Negotiable or a specific range"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="vacancies"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Number of Vacancies
-          </label>
-          <input
-            type="number"
-            id="vacancies"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={vacancies}
-            onChange={(e) => setVacancies(Math.max(1, Number(e.target.value)))} // Ensure min 1
-            min="1"
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="applicationDeadline"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Application Deadline
-          </label>
-          <input
-            type="date"
-            id="applicationDeadline"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={applicationDeadline}
-            onChange={(e) => setApplicationDeadline(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </div>
+        {[
+          {
+            id: "jobTitle",
+            label: "Job Title",
+            type: "text",
+            required: true,
+          },
+          {
+            id: "jobDescription",
+            label: "Job Description",
+            type: "textarea",
+            required: true,
+            minHeight: 150,
+          },
+          {
+            id: "requiredSkills",
+            label:
+              "Required Skills (comma-separated, e.g., React, Node.js, SQL)",
+            type: "text",
+            required: true,
+          },
+          {
+            id: "jobType",
+            label: "Job Type",
+            type: "select",
+            options: jobTypeOptions,
+            required: true,
+          },
+          {
+            id: "requiredExperience",
+            label: "Required Experience (years)",
+            type: "select",
+            options: experienceYearsOptions,
+            required: true,
+          },
+          {
+            id: "experienceLevel",
+            label: "Experience Level",
+            type: "select",
+            options: experienceLevelOptions,
+            required: true,
+            formatOption: (opt) =>
+              opt
+                .split("-")
+                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(" "),
+          },
+          {
+            id: "salary",
+            label: "Salary (Optional, e.g., $50,000 - $70,000 per year)",
+            type: "text",
+            required: false,
+            placeholder: "e.g., Negotiable or a specific range",
+          },
+          {
+            id: "vacancies",
+            label: "Number of Vacancies",
+            type: "number",
+            required: true,
+            min: 1,
+          },
+          {
+            id: "applicationDeadline",
+            label: "Application Deadline",
+            type: "date",
+            required: true,
+          },
+        ].map(
+          ({
+            id,
+            label,
+            type,
+            options,
+            required,
+            placeholder,
+            minHeight,
+            min,
+            formatOption,
+          }) => (
+            <div key={id}>
+              <label
+                htmlFor={id}
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                {label}
+              </label>
+              {type === "textarea" ? (
+                <textarea
+                  id={id}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={form[id]}
+                  onChange={handleChange}
+                  required={required}
+                  disabled={loading}
+                  style={{ minHeight: minHeight || undefined }}
+                />
+              ) : type === "select" ? (
+                <select
+                  id={id}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none custom-select-arrow"
+                  value={form[id]}
+                  onChange={handleChange}
+                  required={required}
+                  disabled={loading}
+                >
+                  {options.map((option) => (
+                    <option key={option} value={option}>
+                      {formatOption
+                        ? formatOption(option)
+                        : option.charAt(0).toUpperCase() + option.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  id={id}
+                  type={type}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={form[id]}
+                  onChange={handleChange}
+                  required={required}
+                  disabled={loading}
+                  placeholder={placeholder}
+                  min={min}
+                />
+              )}
+            </div>
+          )
+        )}
         <button
           type="submit"
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"

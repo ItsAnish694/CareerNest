@@ -11,43 +11,44 @@ function UpdateCompanyProfileInfo() {
     checkAuthStatus,
   } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [companyName, setCompanyName] = useState("");
-  const [companyBio, setCompanyBio] = useState("");
-  const [companyDistrict, setCompanyDistrict] = useState("");
-  const [companyCity, setCompanyCity] = useState("");
-  const [companyArea, setCompanyArea] = useState("");
+  const [form, setForm] = useState({
+    companyName: "",
+    companyBio: "",
+    companyDistrict: "",
+    companyCity: "",
+    companyArea: "",
+  });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && company) {
-      setCompanyName(company.companyName || "");
-      setCompanyBio(company.companyBio || "");
-      setCompanyDistrict(company.companyDistrict || "");
-      setCompanyCity(company.companyCity || "");
-      setCompanyArea(company.companyArea || "");
+      setForm({
+        companyName: company.companyName || "",
+        companyBio: company.companyBio || "",
+        companyDistrict: company.companyDistrict || "",
+        companyCity: company.companyCity || "",
+        companyArea: company.companyArea || "",
+      });
     }
   }, [company, authLoading]);
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setForm((prev) => ({ ...prev, [id]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    const updateData = {
-      companyName,
-      companyBio,
-      companyDistrict,
-      companyCity,
-      companyArea,
-    };
-
     try {
-      const response = await api.patch("/company/profile", updateData);
+      const response = await api.patch("/company/profile", form);
       if (response.data.Success) {
-        await checkAuthStatus(); // Update company info in context
+        await checkAuthStatus();
         navigate("/company/profile");
       }
     } catch (error) {
-      // Error handled by interceptor
+      // Error handled globally
     } finally {
       setLoading(false);
     }
@@ -71,95 +72,98 @@ function UpdateCompanyProfileInfo() {
         Update Company Profile
       </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="companyName"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Company Name
-          </label>
-          <input
-            type="text"
-            id="companyName"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="companyBio"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Company Bio
-          </label>
-          <textarea
-            id="companyBio"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-            value={companyBio}
-            onChange={(e) => setCompanyBio(e.target.value)}
-            disabled={loading}
-            placeholder="Tell us about your company..."
-          ></textarea>
-        </div>
-        <div>
-          <label
-            htmlFor="companyDistrict"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Company District
-          </label>
-          <input
-            type="text"
-            id="companyDistrict"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={companyDistrict}
-            onChange={(e) => setCompanyDistrict(e.target.value)}
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="companyCity"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Company City
-          </label>
-          <input
-            type="text"
-            id="companyCity"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={companyCity}
-            onChange={(e) => setCompanyCity(e.target.value)}
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="companyArea"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Company Area
-          </label>
-          <input
-            type="text"
-            id="companyArea"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={companyArea}
-            onChange={(e) => setCompanyArea(e.target.value)}
-            disabled={loading}
-          />
-        </div>
+        <InputField
+          id="companyName"
+          label="Company Name"
+          value={form.companyName}
+          onChange={handleChange}
+          disabled={loading}
+          required
+        />
+        <TextAreaField
+          id="companyBio"
+          label="Company Bio"
+          value={form.companyBio}
+          onChange={handleChange}
+          disabled={loading}
+          placeholder="Tell us about your company..."
+        />
+        <InputField
+          id="companyDistrict"
+          label="Company District"
+          value={form.companyDistrict}
+          onChange={handleChange}
+          disabled={loading}
+        />
+        <InputField
+          id="companyCity"
+          label="Company City"
+          value={form.companyCity}
+          onChange={handleChange}
+          disabled={loading}
+        />
+        <InputField
+          id="companyArea"
+          label="Company Area"
+          value={form.companyArea}
+          onChange={handleChange}
+          disabled={loading}
+        />
         <button
           type="submit"
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading}
+          className="w-full flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors"
         >
-          {loading ? <LoadingSpinner /> : "Update Profile"}
+          {loading ? (
+            <LoadingSpinner variant="inline" size={20} />
+          ) : (
+            "Update Profile"
+          )}
         </button>
       </form>
+    </div>
+  );
+}
+
+function InputField({ id, label, value, onChange, disabled, required }) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        type="text"
+        value={value}
+        onChange={onChange}
+        required={required}
+        disabled={disabled}
+        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+  );
+}
+
+function TextAreaField({ id, label, value, onChange, disabled, placeholder }) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        {label}
+      </label>
+      <textarea
+        id={id}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        placeholder={placeholder}
+        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+      />
     </div>
   );
 }

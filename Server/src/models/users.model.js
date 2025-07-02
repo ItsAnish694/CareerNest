@@ -73,14 +73,6 @@ const userSchema = new Schema(
       type: String,
       lowercase: true,
     },
-    applicationCount: {
-      type: Number,
-      default: 0,
-    },
-    bookmarkCount: {
-      type: Number,
-      default: 0,
-    },
     refreshToken: {
       trim: true,
       type: String,

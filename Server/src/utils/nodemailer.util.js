@@ -8,7 +8,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmail = async (receiver, mailBody, subject) => {
+export const sendEmail = async (receiver, subject, mailBody) => {
   const mailOptions = {
     from: `"CareerNest" <${process.env.BUSSINESS_EMAIL}>`,
     to: receiver,

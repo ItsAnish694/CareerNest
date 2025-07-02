@@ -6,29 +6,31 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 function VerifyCompanyEmail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [verificationStatus, setVerificationStatus] = useState("Verifying...");
+  const [status, setStatus] = useState("Verifying...");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = searchParams.get("token");
+    console.log(token);
 
     const verifyEmail = async () => {
       if (!token) {
-        setVerificationStatus("Error: Verification token missing.");
+        setStatus("Error: Verification token missing.");
         setLoading(false);
         return;
       }
 
       try {
-        const response = await api.post("/company/profile/verifyEmail", {
-          token,
-        }); // Backend expects token in body for POST
+        const response = await api.post(
+          `/company/profile/verifyEmail?token=${token}`
+        );
+
         if (response.data.Success) {
-          setVerificationStatus("Company email successfully updated!");
-          setTimeout(() => navigate("/company/profile"), 3000); // Redirect after success
+          setStatus("Company email successfully verified!");
+          setTimeout(() => navigate("/company/profile"), 3000);
         }
       } catch (error) {
-        setVerificationStatus(
+        setStatus(
           `Error: ${
             error.response?.data?.Error?.Message || "Failed to verify email."
           }`
@@ -49,17 +51,15 @@ function VerifyCompanyEmail() {
       {loading ? (
         <>
           <LoadingSpinner />
-          <p className="text-gray-700 mt-4">{verificationStatus}</p>
+          <p className="text-gray-700 mt-4">{status}</p>
         </>
       ) : (
         <p
-          className={`text-lg ${
-            verificationStatus.includes("Error")
-              ? "text-red-600"
-              : "text-green-600"
+          className={`text-lg font-medium ${
+            status.includes("Error") ? "text-red-600" : "text-green-600"
           }`}
         >
-          {verificationStatus}
+          {status}
         </p>
       )}
     </div>

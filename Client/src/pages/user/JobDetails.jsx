@@ -4,8 +4,8 @@ import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NoDataMessage from "../../components/common/NoDataMessage";
 import { AuthContext } from "../../contexts/AuthContext";
-import { toast } from "react-toastify";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBookmark,
@@ -39,67 +39,55 @@ function JobDetails() {
 
   useEffect(() => {
     fetchJobDetails();
-    checkApplicationAndBookmarkStatus();
+    // checkApplicationAndBookmarkStatus();
   }, [jobId, user, company]); // Re-fetch if user/company context changes
 
   const fetchJobDetails = async () => {
     setLoading(true);
     try {
-      // Fetch specific job details. Backend has getAllJobsDetails, but it's a list.
-      // A dedicated /jobs/:jobID endpoint for single job details would be ideal,
-      // but for now, we'll assume we can filter from a larger list or rely on the backend to
-      // send comprehensive data for one job.
-      // Given the backend does not have a direct '/jobs/:id' endpoint for users,
-      // we'll simulate fetching from a list or assume backend aggregates one job.
-      // For this example, let's pretend there's an API endpoint that returns one job.
-      // As a workaround, we'll call getAllJobsDetails and filter,
-      // though this is inefficient for a single job lookup.
-      // A better backend would have: /api/v1/jobs/:jobId
-      const response = await api.get(`/user/jobs?jobId=${jobId}`); // Adjusted to simulate direct job fetch
+      // Assuming the API endpoint /user/jobs?jobId=${jobId} now directly returns the single job object
+      // if found, or null/empty data if not.
+      const response = await api.get(`/user/jobs?jobID=${jobId}`);
+
       if (response.data.Success && response.data.data) {
-        const foundJob = Array.isArray(response.data.data)
-          ? response.data.data.find((j) => j._id === jobId)
-          : response.data.data;
-        if (foundJob) {
-          setJob(foundJob);
-        } else {
-          setJob(null);
-        }
+        setJob(response.data.data);
+        setIsApplied(response.data.data.isApplied);
+        setIsBookmarked(response.data.data.isBookmarked); // Directly set the fetched data as the job
       } else {
-        setJob(null);
+        setJob(null); // No job found or success is false
       }
     } catch (error) {
-      setJob(null);
-      // Error handled by interceptor
+      setJob(null); // Set job to null on error
+      // Error handled by interceptor (e.g., toast.error)
     } finally {
       setLoading(false);
     }
   };
 
-  const checkApplicationAndBookmarkStatus = async () => {
-    if (!user || authLoading) {
-      setIsApplied(false);
-      setIsBookmarked(false);
-      return;
-    }
-    try {
-      // Check if applied
-      const appliedRes = await api.get("/user/applications");
-      if (appliedRes.data.Success && appliedRes.data.data) {
-        setIsApplied(appliedRes.data.data.some((app) => app._id === jobId));
-      }
+  // const checkApplicationAndBookmarkStatus = async () => {
+  //   if (!user || authLoading) {
+  //     setIsApplied(false);
+  //     setIsBookmarked(false);
+  //     return;
+  //   }
+  //   try {
+  //     // Check if applied
+  //     const appliedRes = await api.get("/user/applications");
+  //     if (appliedRes.data.Success && appliedRes.data.data) {
+  //       setIsApplied(appliedRes.data.data.some((app) => app._id === jobId));
+  //     }
 
-      // Check if bookmarked
-      const bookmarkRes = await api.get("/user/bookmarks");
-      if (bookmarkRes.data.Success && bookmarkRes.data.data) {
-        setIsBookmarked(bookmarkRes.data.data.some((bm) => bm._id === jobId));
-      }
-    } catch (error) {
-      console.error("Failed to check application/bookmark status:", error);
-      setIsApplied(false);
-      setIsBookmarked(false);
-    }
-  };
+  //     // Check if bookmarked
+  //     const bookmarkRes = await api.get("/user/bookmarks");
+  //     if (bookmarkRes.data.Success && bookmarkRes.data.data) {
+  //       setIsBookmarked(bookmarkRes.data.data.some((bm) => bm._id === jobId));
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to check application/bookmark status:", error);
+  //     setIsApplied(false);
+  //     setIsBookmarked(false);
+  //   }
+  // };
 
   const handleApplyJob = async () => {
     setIsConfirmingApply(false); // Close modal
@@ -130,7 +118,6 @@ function JobDetails() {
     setIsConfirmingDeleteApplication(false); // Close modal
     try {
       await api.delete(`/user/applications/${jobId}`);
-      // toast.success is handled by interceptor
       setIsApplied(false);
       checkAuthStatus(); // Update application count in context
     } catch (error) {
@@ -255,7 +242,7 @@ function JobDetails() {
             />{" "}
             {/* Responsive icon size */}
             Deadline:{" "}
-            {format(new Date(job.applicationDeadline), "MMM dd, yyyy (EEEE)")}
+            {format(new Date(job.applicationDeadline), "MMMM do,PPPP (EEEE)")}
           </span>
         )}
       </div>

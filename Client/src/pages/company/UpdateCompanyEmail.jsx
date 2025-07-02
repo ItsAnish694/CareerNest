@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
@@ -19,23 +19,23 @@ function UpdateCompanyEmail() {
         email: newEmail,
       });
       if (response.data.Success) {
-        // Email verification email sent
         navigate("/company/profile");
       }
-    } catch (error) {
-      // Error handled by interceptor
+    } catch {
+      // Error handled globally by interceptor
     } finally {
       setLoading(false);
     }
   };
 
   if (authLoading) {
-    return <LoadingSpinner />;
+    // Full page loading spinner when auth status is loading
+    return <LoadingSpinner message="Checking authentication..." />;
   }
 
   if (!company) {
     return (
-      <p className="text-center text-red-500">
+      <p className="text-center text-red-500 mt-10">
         Please log in to change your company email.
       </p>
     );
@@ -53,29 +53,31 @@ function UpdateCompanyEmail() {
         </span>
       </p>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="newEmail"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            New Email
-          </label>
+        <label
+          htmlFor="newEmail"
+          className="block text-sm font-medium text-gray-700"
+        >
+          New Email
           <input
             type="email"
             id="newEmail"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full mt-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             required
             disabled={loading}
           />
-        </div>
+        </label>
         <button
           type="submit"
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading}
+          className="w-full flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors"
         >
-          {loading ? <LoadingSpinner /> : "Send Verification Email"}
+          {loading ? (
+            <LoadingSpinner variant="inline" />
+          ) : (
+            "Send Verification Email"
+          )}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-gray-600">

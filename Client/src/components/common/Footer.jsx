@@ -10,20 +10,23 @@ function Footer() {
         </p>
         <div className="flex justify-center space-x-4 mt-4">
           <a
-            href="#"
+            href="#privacy"
             className="text-gray-300 hover:text-white transition-colors"
+            aria-label="Privacy Policy"
           >
             Privacy Policy
           </a>
           <a
-            href="#"
+            href="#terms"
             className="text-gray-300 hover:text-white transition-colors"
+            aria-label="Terms of Service"
           >
             Terms of Service
           </a>
           <a
-            href="#"
+            href="#contact"
             className="text-gray-300 hover:text-white transition-colors"
+            aria-label="Contact Us"
           >
             Contact Us
           </a>

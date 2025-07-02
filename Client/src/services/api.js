@@ -5,10 +5,10 @@ const API_BASE_URL = "/api/v1";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // Crucial for sending and receiving HTTP-only cookies
+  withCredentials: true, // Important for cookies (sessions)
 });
 
-// Axios Interceptor for handling global errors and success messages
+// Global interceptor for handling success and error messages
 api.interceptors.response.use(
   (response) => {
     if (response.data.message) {

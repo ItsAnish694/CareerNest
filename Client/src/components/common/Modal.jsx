@@ -9,25 +9,35 @@ function Modal({
   title,
   children,
   onConfirm,
-  confirmText,
+  confirmText = "Confirm",
   confirmButtonClass = "bg-blue-600 hover:bg-blue-700",
   showConfirmButton = true,
 }) {
   if (!isOpen) return null;
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 sm:p-6">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 sm:p-6"
+      aria-modal="true"
+      role="dialog"
+      aria-labelledby="modal-title"
+    >
       <div
-        className={`bg-white p-6 sm:p-8 rounded-xl shadow-2xl max-w-sm sm:max-w-md md:max-w-lg w-full mx-auto transition-all duration-300 ease-out
-        ${
-          isOpen
-            ? "scale-100 opacity-100"
-            : "scale-95 opacity-0 pointer-events-none"
-        }
-    `}
+        className={`
+          bg-white p-6 sm:p-8 rounded-xl shadow-2xl max-w-sm sm:max-w-md md:max-w-lg w-full mx-auto 
+          transform transition-all duration-300 ease-out
+          ${
+            isOpen
+              ? "scale-100 opacity-100"
+              : "scale-95 opacity-0 pointer-events-none"
+          }
+        `}
       >
         <div className="flex justify-between items-center pb-4 border-b border-gray-200 mb-4">
-          <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+          <h3
+            id="modal-title"
+            className="text-xl sm:text-2xl font-bold text-gray-900"
+          >
             {title}
           </h3>
           <button
@@ -38,9 +48,11 @@ function Modal({
             <FontAwesomeIcon icon={faTimes} className="text-lg sm:text-xl" />
           </button>
         </div>
+
         <div className="text-gray-700 text-base sm:text-lg mb-6 leading-relaxed">
           {children}
         </div>
+
         <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
           <button
             onClick={onClose}
@@ -59,7 +71,7 @@ function Modal({
         </div>
       </div>
     </div>,
-    document.getElementById("root") // Append modal to root element
+    document.getElementById("root")
   );
 }
 

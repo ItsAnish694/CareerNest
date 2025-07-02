@@ -25,7 +25,6 @@ function UpdateCompanyLogo() {
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
         toast.error("File size must be less than 5MB.");
         setCompanyLogo(null);
         e.target.value = null;
@@ -37,14 +36,12 @@ function UpdateCompanyLogo() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
     if (!companyLogo) {
       toast.error("Please select a new company logo.");
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
     const formData = new FormData();
     formData.append("companyLogo", companyLogo);
 
@@ -53,33 +50,29 @@ function UpdateCompanyLogo() {
         "/company/profile/companyLogo",
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
       if (response.data.Success) {
-        await checkAuthStatus(); // Update company info in context
+        await checkAuthStatus();
         navigate("/company/profile");
       }
-    } catch (error) {
-      // Error handled by interceptor
+    } catch {
+      // handled by interceptor
     } finally {
       setLoading(false);
     }
   };
 
-  if (authLoading) {
-    return <LoadingSpinner />;
-  }
+  if (authLoading)
+    return <LoadingSpinner message="Loading your company info..." />;
 
-  if (!company) {
+  if (!company)
     return (
-      <p className="text-center text-red-500">
+      <p className="text-center text-red-500 mt-10">
         Please log in to update your company logo.
       </p>
     );
-  }
 
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md my-10">
@@ -101,28 +94,30 @@ function UpdateCompanyLogo() {
         />
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="companyLogo"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Choose New Company Logo (JPG, PNG - Max 5MB)
-          </label>
+        <label
+          htmlFor="companyLogo"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Choose New Company Logo (JPG, PNG - Max 5MB)
           <input
             type="file"
             id="companyLogo"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             accept="image/jpeg,image/png,image/jpg"
             onChange={handleFileChange}
             disabled={loading}
+            className="w-full mt-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </div>
+        </label>
         <button
           type="submit"
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading || !companyLogo}
+          className="w-full flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors disabled:opacity-60"
         >
-          {loading ? <LoadingSpinner /> : "Update Logo"}
+          {loading ? (
+            <LoadingSpinner variant="inline" size={20} />
+          ) : (
+            "Update Logo"
+          )}
         </button>
       </form>
     </div>

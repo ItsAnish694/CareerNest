@@ -5,26 +5,24 @@ import NoDataMessage from "../../components/common/NoDataMessage";
 import JobCard from "../../components/jobs/JobCard";
 import Pagination from "../../components/common/Pagination";
 import { AuthContext } from "../../contexts/AuthContext";
-import { toast } from "react-toastify";
-import Modal from "../../components/common/Modal"; // Assuming you have a Modal component
+import Modal from "../../components/common/Modal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
-import { format } from "date-fns";
 
 function AppliedJobs() {
   const { user, loading: authLoading } = useContext(AuthContext);
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [jobToDelete, setJobToDelete] = useState(null); // State to hold job ID for deletion confirmation
+  const [jobToDelete, setJobToDelete] = useState(null);
 
-  const limit = 10; // Number of jobs per page
+  const limit = 9; // Slightly smaller limit for better mobile pagination
 
   useEffect(() => {
     if (!authLoading && user) {
       fetchAppliedJobs();
     }
-  }, [currentPage, user, authLoading]); // Re-fetch when page or user changes
+  }, [currentPage, user, authLoading]);
 
   const fetchAppliedJobs = async () => {
     setLoading(true);
@@ -32,54 +30,36 @@ function AppliedJobs() {
       const response = await api.get(
         `/user/applications?limit=${limit}&page=${currentPage}`
       );
-      if (response.data.Success) {
-        setAppliedJobs(response.data.data);
-      } else {
-        setAppliedJobs([]);
-      }
-    } catch (error) {
+      setAppliedJobs(response.data.Success ? response.data.data : []);
+    } catch {
       setAppliedJobs([]);
-      // Error handled by interceptor
     } finally {
       setLoading(false);
     }
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  const confirmDeleteApplication = (jobId) => {
-    setJobToDelete(jobId);
   };
 
   const handleDeleteApplication = async () => {
-    if (!jobToDelete) return; // Should not happen if modal is triggered correctly
+    if (!jobToDelete) return;
     setLoading(true);
     try {
       await api.delete(`/user/applications/${jobToDelete}`);
-      // toast.success is handled by interceptor
-      setAppliedJobs(appliedJobs.filter((job) => job._id !== jobToDelete)); // Optimistic UI update
-      setJobToDelete(null); // Close modal
-      fetchAppliedJobs(); // Re-fetch to ensure data consistency and update counts
-    } catch (error) {
-      // toast.error is handled by interceptor
+      setAppliedJobs((prev) => prev.filter((job) => job._id !== jobToDelete));
+      setJobToDelete(null);
+      fetchAppliedJobs();
+    } catch {
+      // Error handled globally
     } finally {
       setLoading(false);
     }
   };
 
-  if (authLoading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!user) {
+  if (authLoading) return <LoadingSpinner />;
+  if (!user)
     return <NoDataMessage message="Please log in to view your applied jobs." />;
-  }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8">
-      <h1 className="text-4xl font-bold text-center text-gray-900 mb-8">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+      <h1 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-8">
         My Applied Jobs
       </h1>
 
@@ -88,22 +68,18 @@ function AppliedJobs() {
       ) : appliedJobs.length === 0 ? (
         <NoDataMessage message="You have not applied for any jobs yet." />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {appliedJobs.map((job) => (
-            <div key={job._id} className="relative">
+            <div
+              key={job._id}
+              className="relative bg-white rounded-xl border border-gray-100 shadow-md overflow-hidden hover:shadow-lg transition-all duration-300"
+            >
               <JobCard job={job} currentUser={user} />
-              <div className="absolute top-4 right-4 flex space-x-2">
-                <button
-                  onClick={() => confirmDeleteApplication(job._id)}
-                  className="p-2 rounded-full text-white shadow-sm hover:opacity-80 transition-opacity bg-red-500"
-                  title="Withdraw Application"
-                >
-                  <FontAwesomeIcon icon={faTrash} />
-                </button>
-              </div>
+
+              {/* Status Badge */}
               <div className="absolute top-4 left-4">
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
                     job.status === "Accepted"
                       ? "bg-green-100 text-green-800"
                       : job.status === "Rejected"
@@ -111,8 +87,19 @@ function AppliedJobs() {
                       : "bg-blue-100 text-blue-800"
                   }`}
                 >
-                  Status: {job.status}
+                  {job.status}
                 </span>
+              </div>
+
+              {/* Withdraw Button */}
+              <div className="absolute top-4 right-4">
+                <button
+                  onClick={() => setJobToDelete(job._id)}
+                  className="p-2 bg-red-500 text-white rounded-full shadow hover:bg-red-600 transition"
+                  title="Withdraw Application"
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
               </div>
             </div>
           ))}
@@ -120,12 +107,14 @@ function AppliedJobs() {
       )}
 
       {!loading && appliedJobs.length > 0 && (
-        <Pagination
-          currentPage={currentPage}
-          totalItems={user?.applicationCount || 0}
-          itemsPerPage={limit}
-          onPageChange={handlePageChange}
-        />
+        <div className="mt-10">
+          <Pagination
+            currentPage={currentPage}
+            totalItems={user?.applicationCount || 0}
+            itemsPerPage={limit}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       )}
 
       <Modal

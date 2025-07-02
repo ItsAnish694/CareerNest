@@ -115,7 +115,7 @@ export const registerUser = asyncHandler(async function (req, res) {
   </div>
 `;
 
-  const emailSent = await sendEmail(email, mailBody, "Email Verification");
+  const emailSent = await sendEmail(email, "Email Verification", mailBody);
 
   if (!emailSent) {
     await User.findByIdAndDelete(user._id);
@@ -308,11 +308,19 @@ export const userProfile = asyncHandler(async function (req, res) {
   if (req.user && !req.user.isVerified)
     throw new ApiError(400, "Unverified User");
 
-  const userProfileInfo = await User.findById(req.user?._id).select(
+  const user = await User.findById(req.user?._id).select(
     "-refreshToken -password"
   );
 
-  if (!userProfileInfo) throw new ApiError(404, "User Not Found");
+  if (!user) throw new ApiError(404, "User Not Found");
+
+  const userProfileInfo = user.toObject();
+  userProfileInfo.applicationCount = await Application.countDocuments({
+    userID: userProfileInfo._id,
+  });
+  userProfileInfo.bookmarkCount = await Bookmark.countDocuments({
+    userID: userProfileInfo._id,
+  });
 
   return res
     .status(200)
@@ -548,7 +556,7 @@ export const updateEmail = asyncHandler(async function (req, res) {
 
   const mailBody = `<a href="${process.env.CORS_ORIGIN}/user/verifyemail?token=${token}">Verify Email</a>`;
 
-  await sendEmail(trimmedEmail, mailBody, "Email Update");
+  await sendEmail(trimmedEmail, "Email Update", mailBody);
 
   return res
     .status(200)
@@ -624,8 +632,6 @@ export const applyJobApplication = asyncHandler(async function (req, res) {
   if (!newApplication)
     throw new ApiError(500, "Error Applying Job", "Please Try Again");
 
-  await User.updateOne({ _id: user._id }, { $inc: { applicationCount: 1 } });
-
   await Job.updateOne({ _id: job._id }, { $inc: { applicationCount: 1 } });
 
   return res
@@ -647,8 +653,6 @@ export const deleteJobApplication = asyncHandler(async function (req, res) {
   if (!appliedJob) throw new ApiError(404, "Application Not Found");
 
   await Application.deleteOne({ _id: appliedJob._id });
-
-  await User.updateOne({ _id: userID }, { $inc: { applicationCount: -1 } });
 
   await Job.updateOne({ _id: jobID }, { $inc: { applicationCount: -1 } });
 
@@ -719,7 +723,7 @@ export const deleteBookmarkJob = asyncHandler(async function (req, res) {
 
 export const getAllBookmarks = asyncHandler(async function (req, res) {
   const userID = req.user._id;
-  const limit = Number(req.query.limit) || 10;
+  const limit = Number(req.query.limit) || 9;
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * limit;
 
@@ -801,12 +805,13 @@ export const getAllBookmarks = asyncHandler(async function (req, res) {
   ]);
 
   const jobsWithScore = calculateJobMatchScores(bookMarkedJobs, user);
+  jobsWithScore.totalCount = jobsWithScore.length;
 
   return res.status(200).json(new ApiResponse(200, jobsWithScore, ""));
 });
 
 export const getAppliedJobs = asyncHandler(async function (req, res) {
-  const limit = Number(req.query.limit) || 10;
+  const limit = Number(req.query.limit) || 9;
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * limit;
 
@@ -890,10 +895,11 @@ export const getAppliedJobs = asyncHandler(async function (req, res) {
 });
 
 export const getAllJobsDetails = asyncHandler(async function (req, res) {
-  const { type = "recommended", limit = "10", page = "1" } = req.query;
+  const { type = "recommended", limit = "9", page = "1" } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
-
+  const jobID = req.query?.jobID;
   const userID = req.user._id;
+
   const userInfo = await User.findById(userID)
     .select("-password -refreshToken")
     .lean();
@@ -921,11 +927,19 @@ export const getAllJobsDetails = asyncHandler(async function (req, res) {
   };
   const aggregationLimit = type === "recommended" ? 100 : Number(limit);
 
+  const matchObject = {
+    applicationDeadline: { $gte: new Date() },
+  };
+
+  if (jobID) {
+    matchObject._id = new mongoose.Types.ObjectId(jobID);
+  }
+
+  const totalCount = await Job.countDocuments(matchObject);
+
   const getAllJobs = await Job.aggregate([
     {
-      $match: {
-        applicationDeadline: { $gte: new Date() },
-      },
+      $match: matchObject,
     },
     { $sort: sort[type] || { createdAt: -1 } },
     { $skip: skip },
@@ -972,6 +986,14 @@ export const getAllJobsDetails = asyncHandler(async function (req, res) {
     },
   ]);
 
+  if (jobID) {
+    if (await Application.findOne({ jobID, userID }))
+      getAllJobs[0].isApplied = true;
+    if (await Bookmark.findOne({ jobID, userID }))
+      getAllJobs[0].isBookmarked = true;
+    return res.status(200).json(new ApiResponse(200, getAllJobs[0], ""));
+  }
+
   if (getAllJobs.length === 0) {
     return res.status(200).json(new ApiResponse(200, [], "No jobs available"));
   }
@@ -991,12 +1013,13 @@ export const getAllJobsDetails = asyncHandler(async function (req, res) {
   } else {
     data = datawithMatchedScore;
   }
+  data.push({ totalCount });
 
   res.status(200).json(new ApiResponse(200, data, ""));
 });
 
 export const searchJobs = asyncHandler(async function (req, res) {
-  const { q, limit = "10", page = "1" } = req.query;
+  const { q, limit = "9", page = "1" } = req.query;
   const userID = req.user._id;
   const skip = (Number(page) - 1) * Number(limit);
   const aggregationLimit = 100;
@@ -1045,6 +1068,11 @@ export const searchJobs = asyncHandler(async function (req, res) {
   const userInfo = await User.findById(userID)
     .select("-refreshToken -password")
     .lean();
+
+  const totalCount = await Job.countDocuments({
+    $or: matchObjects,
+    applicationDeadline: { $gte: new Date() },
+  });
 
   const searchedJobs = await Job.aggregate([
     {
@@ -1112,7 +1140,17 @@ export const searchJobs = asyncHandler(async function (req, res) {
 
   const jobsWithMatchedScore = calculateJobMatchScores(searchedJobs, userInfo);
 
-  res.status(200).json(new ApiResponse(200, jobsWithMatchedScore, ""));
+  const data = jobsWithMatchedScore
+    .sort((a, b) => {
+      const maxSort = b.totalMatchedScore * 0.7 + b.applicationCount * 0.3;
+      const minSort = a.totalMatchedScore * 0.7 + a.applicationCount * 0.3;
+      return maxSort - minSort;
+    })
+    .slice(0, Number(limit));
+
+  data.push({ totalCount });
+
+  res.status(200).json(new ApiResponse(200, data, ""));
 });
 
 export const homePage = asyncHandler(async function (req, res) {

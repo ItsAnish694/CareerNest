@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NoDataMessage from "../../components/common/NoDataMessage";
@@ -16,10 +16,9 @@ function JobListing() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useContext(AuthContext); // Get user from context
-  // const { user, loading: authLoading } = useContext(AuthContext); // Get user from context
   const [totalJobsCount, setTotalJobsCount] = useState(0); // New state to store total count
 
-  const limit = 10; // Number of jobs per page
+  const limit = 9; // Number of jobs per page
 
   useEffect(() => {
     // Sync state with URL params on initial load
@@ -30,9 +29,8 @@ function JobListing() {
     setJobTypeFilter(typeParam);
     setCurrentPage(pageParam);
     setSearchQuery(qParam);
-
     fetchJobs(typeParam, pageParam, qParam);
-  }, [searchParams, user]); // Re-fetch when searchParams or user changes
+  }, [searchParams, user]);
 
   const fetchJobs = async (type, page, q) => {
     setLoading(true);
@@ -44,11 +42,17 @@ function JobListing() {
         url = `/user/jobs?type=${type}&limit=${limit}&page=${page}`;
       }
       const response = await api.get(url);
-      if (response.data.Success) {
-        setJobs(response.data.data);
+      const Success = response.data.Success;
+      const data = response.data.data.slice(0, response.data.data.length - 1);
+      const totalCount =
+        response.data.data[response.data.data.length - 1].totalCount;
+
+      if (Success) {
+        setJobs(data);
+
         // Assuming your backend response includes a totalCount field for pagination
-        if (response.data.totalCount !== undefined) {
-          setTotalJobsCount(response.data.totalCount);
+        if (totalCount !== undefined) {
+          setTotalJobsCount(totalCount);
         } else {
           // Fallback if totalCount is not provided by backend, though it's recommended
           // to get the actual total from the backend for accurate pagination.
@@ -188,7 +192,6 @@ function JobListing() {
         <div className="mt-8 sm:mt-10 flex justify-center">
           <Pagination
             currentPage={currentPage}
-            s
             totalItems={totalJobsCount}
             itemsPerPage={limit}
             onPageChange={handlePageChange}

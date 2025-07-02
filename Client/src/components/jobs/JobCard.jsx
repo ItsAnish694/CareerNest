@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,9 +12,10 @@ import {
 function JobCard({ job, currentUser }) {
   const defaultCompanyLogo =
     "https://res.cloudinary.com/dcsgpah7o/image/upload/v1751301683/ChatGPT_Image_Jun_16_2025_01_15_18_AM_jap5gt.png";
+
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 p-4 sm:p-5 md:p-6 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out border border-gray-100 flex flex-col justify-between h-full transform hover:-translate-y-1 max-w-full mx-auto xl:max-w-6xl">
-      {/* Company Logo and Job Title Section */}
+      {/* Header (logo and title) */}
       <div className="flex-grow">
         <div className="flex items-start mb-3 sm:mb-4">
           <img
@@ -27,7 +27,7 @@ function JobCard({ job, currentUser }) {
               e.target.src = defaultCompanyLogo;
             }}
           />
-          <div className="flex-grow">
+          <div>
             <h3 className="text-lg sm:text-xl lg:text-2xl font-extrabold text-gray-900 leading-tight capitalize mb-0.5">
               {job.jobTitle}
             </h3>
@@ -37,12 +37,12 @@ function JobCard({ job, currentUser }) {
           </div>
         </div>
 
-        {/* Job Description */}
+        {/* Description */}
         <p className="text-gray-700 text-xs sm:text-sm lg:text-base mb-3 sm:mb-4 line-clamp-3 leading-relaxed">
           {job.jobDescription}
         </p>
 
-        {/* Key Job Details */}
+        {/* Details */}
         <div className="space-y-1.5 sm:space-y-2 text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
           <p className="flex items-center text-xs sm:text-sm lg:text-base">
             <FontAwesomeIcon
@@ -75,12 +75,12 @@ function JobCard({ job, currentUser }) {
               icon={faCalendarAlt}
               className="mr-2 sm:mr-3 text-blue-600 text-base sm:text-lg lg:text-xl"
             />
-            Deadline:{" "}
+            Deadline:
             {format(new Date(job.applicationDeadline), "MMM dd, yyyy (EEEE)")}
           </p>
         </div>
 
-        {/* Required Skills */}
+        {/* Skills */}
         {job.requiredSkills && job.requiredSkills.length > 0 && (
           <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3 sm:mb-4">
             {job.requiredSkills.slice(0, 3).map((skill, index) => (
@@ -99,9 +99,8 @@ function JobCard({ job, currentUser }) {
           </div>
         )}
 
-        {/* Match Score (only for logged-in users) */}
-        {currentUser &&
-          currentUser.role === "user" &&
+        {/* Match Score */}
+        {currentUser?.role === "user" &&
           typeof job.totalMatchedScore === "number" && (
             <div className="flex items-center bg-green-50 text-green-800 font-bold text-sm px-3 py-1 sm:px-4 sm:py-1.5 rounded-md mb-3 sm:mb-4 shadow-sm">
               <FontAwesomeIcon icon={faPercent} className="mr-2" />
@@ -110,7 +109,7 @@ function JobCard({ job, currentUser }) {
           )}
       </div>
 
-      {/* View Details Button */}
+      {/* Button */}
       <div className="mt-auto pt-3 sm:pt-4">
         <Link
           to={`/jobs/${job._id}`}

@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NoDataMessage from "../../components/common/NoDataMessage";
 import JobCard from "../../components/jobs/JobCard";
 import Pagination from "../../components/common/Pagination";
 import { AuthContext } from "../../contexts/AuthContext";
-import { toast } from "react-toastify";
 import Modal from "../../components/common/Modal"; // Assuming you have a Modal component
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookmark } from "@fortawesome/free-solid-svg-icons";

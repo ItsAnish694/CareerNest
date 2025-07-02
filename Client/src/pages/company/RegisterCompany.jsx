@@ -5,32 +5,37 @@ import { toast } from "react-toastify";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 function RegisterCompany() {
-  const [companyName, setCompanyName] = useState("");
-  const [companyEmail, setCompanyEmail] = useState("");
-  const [companyPassword, setCompanyPassword] = useState("");
-  const [companyLogo, setCompanyLogo] = useState(null);
+  const [form, setForm] = useState({
+    companyName: "",
+    companyEmail: "",
+    companyPassword: "",
+    companyLogo: null,
+  });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
-        toast.error(
-          "Only .jpeg, .jpg, and .png files are allowed for company logo."
-        );
-        setCompanyLogo(null);
-        e.target.value = null;
-        return;
+  const handleChange = (e) => {
+    const { id, value, files } = e.target;
+
+    if (id === "companyLogo") {
+      const file = files[0];
+      if (file) {
+        if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
+          toast.error("Only .jpeg, .jpg, and .png files are allowed.");
+          e.target.value = null;
+          setForm((prev) => ({ ...prev, companyLogo: null }));
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error("File size must be less than 5MB.");
+          e.target.value = null;
+          setForm((prev) => ({ ...prev, companyLogo: null }));
+          return;
+        }
+        setForm((prev) => ({ ...prev, companyLogo: file }));
       }
-      if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        toast.error("File size must be less than 5MB.");
-        setCompanyLogo(null);
-        e.target.value = null;
-        return;
-      }
-      setCompanyLogo(file);
+    } else {
+      setForm((prev) => ({ ...prev, [id]: value }));
     }
   };
 
@@ -39,25 +44,22 @@ function RegisterCompany() {
     setLoading(true);
 
     const formData = new FormData();
-    formData.append("companyName", companyName);
-    formData.append("companyEmail", companyEmail);
-    formData.append("companyPassword", companyPassword);
-    if (companyLogo) {
-      formData.append("companyLogo", companyLogo);
+    formData.append("companyName", form.companyName);
+    formData.append("companyEmail", form.companyEmail);
+    formData.append("companyPassword", form.companyPassword);
+    if (form.companyLogo) {
+      formData.append("companyLogo", form.companyLogo);
     }
 
     try {
       const response = await api.post("/company/register", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
       if (response.data.Success) {
-        // toast.success is handled by interceptor
-        navigate("/login"); // Redirect to login, verification email sent
+        navigate("/login");
       }
-    } catch (error) {
-      // toast.error is handled by interceptor
+    } catch {
+      // Error handled globally by interceptor
     } finally {
       setLoading(false);
     }
@@ -69,60 +71,34 @@ function RegisterCompany() {
         Register Your Company
       </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="companyName"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Company Name
-          </label>
-          <input
-            type="text"
-            id="companyName"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="companyEmail"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Company Email
-          </label>
-          <input
-            type="email"
-            id="companyEmail"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={companyEmail}
-            onChange={(e) => setCompanyEmail(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="companyPassword"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Password
-          </label>
-          <input
-            type="password"
-            id="companyPassword"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={companyPassword}
-            onChange={(e) => setCompanyPassword(e.target.value)}
-            required
-            disabled={loading}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Strong password: 8 characters, numbers, uppercase, lowercase.
-          </p>
-        </div>
+        <InputField
+          id="companyName"
+          label="Company Name"
+          type="text"
+          value={form.companyName}
+          onChange={handleChange}
+          required
+          disabled={loading}
+        />
+        <InputField
+          id="companyEmail"
+          label="Company Email"
+          type="email"
+          value={form.companyEmail}
+          onChange={handleChange}
+          required
+          disabled={loading}
+        />
+        <InputField
+          id="companyPassword"
+          label="Password"
+          type="password"
+          value={form.companyPassword}
+          onChange={handleChange}
+          required
+          disabled={loading}
+          helperText="Strong password: 8 characters, numbers, uppercase, lowercase."
+        />
         <div>
           <label
             htmlFor="companyLogo"
@@ -133,18 +109,18 @@ function RegisterCompany() {
           <input
             type="file"
             id="companyLogo"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             accept="image/jpeg,image/png,image/jpg"
-            onChange={handleFileChange}
+            onChange={handleChange}
             disabled={loading}
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <button
           type="submit"
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading}
+          className="w-full flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors"
         >
-          {loading ? <LoadingSpinner /> : "Register Company"}
+          {loading ? <LoadingSpinner variant="inline" /> : "Register Company"}
         </button>
       </form>
       <p className="mt-6 text-center text-gray-600">
@@ -153,6 +129,38 @@ function RegisterCompany() {
           Login
         </Link>
       </p>
+    </div>
+  );
+}
+
+function InputField({
+  id,
+  label,
+  type,
+  value,
+  onChange,
+  required,
+  disabled,
+  helperText,
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        disabled={disabled}
+        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {helperText && <p className="text-xs text-gray-500 mt-1">{helperText}</p>}
     </div>
   );
 }

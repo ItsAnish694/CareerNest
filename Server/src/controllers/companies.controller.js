@@ -5,11 +5,15 @@ import { asyncHandler } from "../utils/asyncHandler.util.js";
 import { ApiError } from "../utils/apiError.util.js";
 import { ApiResponse } from "../utils/apiResponse.util.js";
 import { searchDictionary } from "../utils/dictionary.util.js";
-import { uploadCloudinary } from "../utils/cloudinary.util.js";
+import {
+  uploadCloudinary,
+  deleteCloudinary,
+} from "../utils/cloudinary.util.js";
 import { Company } from "../models/companies.model.js";
 import { sendEmail } from "../utils/nodemailer.util.js";
 import { Job } from "../models/jobs.model.js";
 import { Application } from "../models/applications.model.js";
+import { Bookmark } from "../models/bookmarks.model.js";
 import { User } from "../models/users.model.js";
 
 export const registerCompany = asyncHandler(async function (req, res) {
@@ -106,8 +110,8 @@ export const registerCompany = asyncHandler(async function (req, res) {
 
   const emailSent = await sendEmail(
     companyEmail,
-    mailBody,
-    "Email Verification"
+    "Email Verification",
+    mailBody
   );
 
   if (!emailSent) {
@@ -208,7 +212,7 @@ export const verifyCompany = asyncHandler(async function (req, res) {
     .json(
       new ApiResponse(
         200,
-        { redirectLink: `${process.env.CORS_ORIGIN}/company/login` },
+        { redirectLink: `${process.env.CORS_ORIGIN}/login` },
         "Verified Successfully"
       )
     );
@@ -494,9 +498,9 @@ export const updateCompanyEmail = asyncHandler(async function (req, res) {
     { expiresIn: "5m" }
   );
 
-  const mailBody = `<a href="http://127.0.0.1:3000/api/v1/company/verifyemail?token=${token}">Verify Company Email</a>`;
+  const mailBody = `<a href="${process.env.CORS_ORIGIN}/company/verifyemail?token=${token}">Verify Company Email</a>`;
 
-  await sendEmail(trimmedEmail, mailBody, "Company Email Update");
+  await sendEmail(trimmedEmail, "Company Email Update", mailBody);
 
   return res
     .status(200)
@@ -531,16 +535,32 @@ export const verifyCompanyEmail = asyncHandler(async function (req, res) {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, null, "Company email successfully updated"));
+    .json(
+      new ApiResponse(
+        200,
+        { Success: true },
+        "Company email successfully updated"
+      )
+    );
 });
 
 export const createJobPosting = asyncHandler(async function (req, res) {
   const companyID = req.user._id;
 
-  if (req.user.isVerified !== "Verified") {
+  if (!mongoose.isValidObjectId(companyID)) {
     throw new ApiError(
       400,
-      "Unverified Company",
+      "Invalid Id",
+      "The Id You Have Provided Is Invalid"
+    );
+  }
+
+  const company = await Company.findById(companyID).select("isVerified").lean();
+
+  if (company.isVerified !== "Verified") {
+    throw new ApiError(
+      400,
+      "Company Not Verified",
       "You Can't Post Job Until Verified"
     );
   }
@@ -652,8 +672,8 @@ export const deleteJobPosting = asyncHandler(async function (req, res) {
   }
 
   await jobInfo.deleteOne();
-
   await Application.deleteMany({ jobID });
+  await Bookmark.deleteMany({ jobID });
 
   res.status(200).json(new ApiResponse(200, null, "Job Posting Deleted"));
 });
@@ -737,17 +757,15 @@ export const getJobApplications = asyncHandler(async function (req, res) {
     },
   ]);
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, applications, "Applications fetched successfully")
-    );
+  return res.status(200).json(new ApiResponse(200, applications, ""));
 });
 
 export const updateApplicationStatus = asyncHandler(async function (req, res) {
   const applicationID = req.params.id;
   const status = req.query.status;
   const companyID = req.user._id;
+  const emailSubject = req.body?.subject;
+  const emailBody = req.body?.body;
 
   const validStatuses = ["Accepted", "Rejected"];
   if (!validStatuses.includes(status)) {
@@ -801,17 +819,16 @@ export const updateApplicationStatus = asyncHandler(async function (req, res) {
 
   await sendEmail(
     userInfo.email,
-    `Application ${status} - ${jobInfo.jobTitle}`,
-    `Dear Applicant,\n\nYour application for "${
-      jobInfo.jobTitle
-    }" has been ${status.toLowerCase()} by ${
-      req.user.companyName
-    }.\n\nThank you for applying.`
+    emailSubject || `Application ${status} - ${jobInfo.jobTitle}`,
+    emailBody ||
+      `Dear Applicant,\n\nYour application for "${
+        jobInfo.jobTitle
+      }" has been ${status.toLowerCase()} by ${
+        req.user.companyName
+      }.\n\nThank you for applying.`
   );
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, null, `Status updated to ${status}`));
+  res.status(200).json(new ApiResponse(200, null, `Application Accepted`));
 });
 
 export const getAllJobsPosted = asyncHandler(async function (req, res) {
@@ -831,7 +848,7 @@ export const getAllJobsPosted = asyncHandler(async function (req, res) {
     .limit(Number(limit))
     .lean();
 
-  res.status(200).json(new ApiResponse(200, jobInfos, "All Jobs"));
+  res.status(200).json(new ApiResponse(200, jobInfos, ""));
 });
 
 export const companyDashboard = asyncHandler(async function (req, res) {
@@ -880,7 +897,5 @@ export const companyDashboard = asyncHandler(async function (req, res) {
     }
   }
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, allStats, "Company Dashboard Info"));
+  return res.status(200).json(new ApiResponse(200, allStats, ""));
 });

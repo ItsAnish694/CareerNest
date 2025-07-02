@@ -4,7 +4,11 @@ import { faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 
 function NoDataMessage({ message }) {
   return (
-    <div className="text-center py-10 bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
+    <div
+      className="text-center py-10 bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center"
+      role="alert"
+      aria-live="polite"
+    >
       <FontAwesomeIcon
         icon={faExclamationCircle}
         className="text-red-500 text-5xl mb-4"

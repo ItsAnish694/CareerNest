@@ -1,62 +1,38 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
-import { toast } from "react-toastify";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user"); // 'user' or 'company'
+  const [role, setRole] = useState("user");
   const [loading, setLoading] = useState(false);
-  const { login, user, company } = useContext(AuthContext); // Also get user/company from context for observation
+  const [errorMessage, setErrorMessage] = useState("");
 
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
-
-  // This useEffect will react to changes in the global AuthContext state
-  // and can be used to trigger navigation if the user/company state becomes populated.
-  useEffect(() => {
-    console.log(
-      "Login Component: AuthContext user/company changed. User:",
-      user,
-      "Company:",
-      company
-    );
-    if (!loading && (user || company)) {
-      // Only navigate if not loading and a user/company is present
-      if (user) {
-        console.log("Login Component: Navigating user to /jobs");
-        navigate("/jobs");
-      } else if (company) {
-        if (company.isVerified === "Verified") {
-          console.log(
-            "Login Component: Navigating verified company to /company/dashboard"
-          );
-          navigate("/company/dashboard");
-        } else {
-          console.log(
-            "Login Component: Navigating unverified company to /company/profile"
-          );
-          navigate("/company/profile");
-        }
-      }
-    }
-  }, [user, company, loading, navigate]); // Depend on user, company, loading, and navigate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(
-      "Login Component: Login button clicked. Setting loading to true."
-    );
     setLoading(true);
+    setErrorMessage(""); // clear any previous error
 
     const result = await login(role, email, password);
-    setLoading(false); // Ensures loading state is reset regardless of success or failure
-    console.log("Login Component: Login function returned:", result);
+    setLoading(false);
 
-    toast.success(result.message);
-    // toast.error is already handled by the axios interceptor in api.js
-    console.log("Login Component: Login failed. Error handled by interceptor.");
+    if (result.success) {
+      if (role === "user") navigate("/jobs");
+      else if (role === "company") {
+        navigate(
+          result.entity.isVerified === "Verified"
+            ? "/company/dashboard"
+            : "/company/profile"
+        );
+      }
+    } else {
+      setErrorMessage(result.message || "Login failed. Please try again.");
+    }
   };
 
   return (
@@ -65,16 +41,10 @@ function Login() {
         Login to CareerNest
       </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label
-            htmlFor="role"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Login As
-          </label>
+        <label className="block text-sm font-medium text-gray-700">
+          Login As
           <select
-            id="role"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none custom-select-arrow"
+            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={role}
             onChange={(e) => setRole(e.target.value)}
             disabled={loading}
@@ -82,47 +52,42 @@ function Login() {
             <option value="user">Job Seeker</option>
             <option value="company">Company</option>
           </select>
-        </div>
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Email
-          </label>
+        </label>
+
+        <label className="block text-sm font-medium text-gray-700">
+          Email
           <input
             type="email"
-            id="email"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
           />
-        </div>
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Password
-          </label>
+        </label>
+
+        <label className="block text-sm font-medium text-gray-700">
+          Password
           <input
             type="password"
-            id="password"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={loading}
           />
-        </div>
+        </label>
+
+        {errorMessage && (
+          <div className="text-red-600 text-sm font-medium">{errorMessage}</div>
+        )}
+
         <button
           type="submit"
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading}
+          className="w-full flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors"
         >
-          {loading ? <LoadingSpinner /> : "Login"}
+          {loading ? <LoadingSpinner variant="inline" /> : "Login"}
         </button>
       </form>
       <p className="mt-6 text-center text-gray-600">
