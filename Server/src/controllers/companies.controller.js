@@ -312,11 +312,15 @@ export const companyProfile = asyncHandler(async function (req, res) {
   if (req.user && !req.user.isVerified === "Verified")
     throw new ApiError(400, "Unverified User");
 
-  const companyProfileInfo = await Company.findById(req.user?._id).select(
-    "-refreshToken -password"
-  );
+  const companyProfileInfo = await Company.findById(req.user?._id)
+    .select("-refreshToken -password")
+    .lean();
 
   if (!companyProfileInfo) throw new ApiError(404, "Company Not Found");
+
+  const jobs = await Job.countDocuments({ companyID: companyProfileInfo._id });
+
+  companyProfileInfo.totalJobPosting = jobs;
 
   return res
     .status(200)

@@ -21,8 +21,7 @@ function CompanyJobPostings() {
   const [jobToDelete, setJobToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const limit = 10;
-
+  const limit = 9;
   useEffect(() => {
     if (!authLoading && company?.isVerified === "Verified") {
       fetchJobs();

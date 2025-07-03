@@ -805,7 +805,6 @@ export const getAllBookmarks = asyncHandler(async function (req, res) {
   ]);
 
   const jobsWithScore = calculateJobMatchScores(bookMarkedJobs, user);
-  jobsWithScore.totalCount = jobsWithScore.length;
 
   return res.status(200).json(new ApiResponse(200, jobsWithScore, ""));
 });

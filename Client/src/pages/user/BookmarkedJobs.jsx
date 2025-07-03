@@ -16,7 +16,7 @@ function BookmarkedJobs() {
   const [currentPage, setCurrentPage] = useState(1);
   const [jobToRemove, setJobToRemove] = useState(null); // State to hold job ID for removal confirmation
 
-  const limit = 10; // Number of jobs per page
+  const limit = 9; // Number of jobs per page
 
   useEffect(() => {
     if (!authLoading && user) {

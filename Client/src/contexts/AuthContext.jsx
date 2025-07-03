@@ -38,6 +38,8 @@ export const AuthProvider = ({ children }) => {
         const companyRes = await axios.get(`${API_BASE_URL}/company/profile`);
         if (companyRes.data.Success && companyRes.data.data) {
           setCompany(companyRes.data.data);
+          console.log(companyRes.data.data);
+
           setUser(null);
           loggedInEntity = companyRes.data.data;
           console.log("AuthContext: Company logged in:", companyRes.data.data);
@@ -105,20 +107,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    console.log("AuthContext: Checking auth status on mount.");
     checkAuthStatus();
   }, []);
-
-  useEffect(() => {
-    console.log(
-      "AuthContext updated: User:",
-      user,
-      "Company:",
-      company,
-      "Loading:",
-      loading
-    );
-  }, [user, company, loading]);
 
   return (
     <AuthContext.Provider

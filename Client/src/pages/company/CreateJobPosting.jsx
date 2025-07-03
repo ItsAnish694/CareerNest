@@ -16,7 +16,6 @@ const jobTypeOptions = [
 const experienceLevelOptions = ["entry-level", "mid-level", "senior-level"];
 
 const experienceYearsOptions = [
-  "Fresh Graduate",
   "1 year",
   "2 years",
   "3 years",
@@ -37,7 +36,7 @@ function CreateJobPosting() {
     jobDescription: "",
     requiredSkills: "",
     jobType: "full time",
-    requiredExperience: "Fresh Graduate",
+    requiredExperience: "1 year",
     experienceLevel: "entry-level",
     salary: "",
     vacancies: 1,
@@ -260,7 +259,7 @@ function CreateJobPosting() {
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading}
         >
-          {loading ? <LoadingSpinner /> : "Post Job"}
+          {loading ? <LoadingSpinner variant="inline" /> : "Post Job"}
         </button>
       </form>
     </div>

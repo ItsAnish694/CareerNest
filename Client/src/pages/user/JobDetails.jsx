@@ -234,15 +234,14 @@ function JobDetails() {
         )}
         {job.applicationDeadline && (
           <span className="flex items-center text-sm sm:text-base lg:text-lg">
-            {" "}
             {/* Responsive text size */}
             <FontAwesomeIcon
               icon={faCalendarAlt}
               className="mr-2 sm:mr-3 lg:mr-4 text-blue-600 text-base sm:text-lg lg:text-xl"
-            />{" "}
+            />
             {/* Responsive icon size */}
-            Deadline:{" "}
-            {format(new Date(job.applicationDeadline), "MMMM do,PPPP (EEEE)")}
+            Deadline:
+            {format(new Date(job.applicationDeadline), "PPP (EEEE)")}
           </span>
         )}
       </div>

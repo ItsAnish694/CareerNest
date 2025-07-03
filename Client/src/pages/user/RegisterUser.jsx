@@ -140,7 +140,7 @@ function RegisterUser() {
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading}
         >
-          {loading ? <LoadingSpinner /> : "Register"}
+          {loading ? <LoadingSpinner variant="inline" /> : "Register"}
         </button>
       </form>
       <p className="mt-6 text-center text-gray-600">

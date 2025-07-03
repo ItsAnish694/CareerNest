@@ -16,7 +16,7 @@ function AppliedJobs() {
   const [currentPage, setCurrentPage] = useState(1);
   const [jobToDelete, setJobToDelete] = useState(null);
 
-  const limit = 9; // Slightly smaller limit for better mobile pagination
+  const limit = 9;
 
   useEffect(() => {
     if (!authLoading && user) {
