@@ -184,6 +184,27 @@ export const verifyUser = asyncHandler(async function (req, res) {
     );
   }
 
+  const properLocation = await fetch(
+    `https://nominatim.openstreetmap.org/search?q={${area} ${city} ${district}}&accept-language=en&format=json&limit=1&addressdetails=1`
+  ).then((data) => data.json());
+
+  if (properLocation.length === 0) {
+    throw new ApiError(
+      400,
+      "Invalid Location",
+      "Please Provide Proper Location"
+    );
+  }
+
+  const normalizedArea = properLocation[0].display_name.split(",")[0];
+  const normalizedCity = properLocation[0].address.city_district;
+  const isInNepal = properLocation[0].address.country;
+  const normalizedDistrict = properLocation[0].address.county;
+
+  if (isInNepal !== "Nepal") {
+    throw new ApiError(400, "Wrong Area", "Provide Locations Inside Nepal");
+  }
+
   if (await User.findOne({ phoneNumber })) {
     throw new ApiError(
       400,
@@ -210,9 +231,9 @@ export const verifyUser = asyncHandler(async function (req, res) {
   user.resumeLink = uploadedResume.secure_url;
   user.skills = normalizedSkills;
   user.phoneNumber = phoneNumber;
-  user.city = city;
-  user.district = district;
-  user.area = area;
+  user.city = normalizedCity;
+  user.district = normalizedDistrict;
+  user.area = normalizedArea;
   user.experiencedYears = experiencedYears;
   user.isVerified = true;
 
@@ -328,8 +349,9 @@ export const userProfile = asyncHandler(async function (req, res) {
 });
 
 export const updateProfileInfo = asyncHandler(async function (req, res) {
-  if (!req.body || Object.keys(req.body).length === 0)
+  if (!req.body || Object.keys(req.body).length === 0) {
     throw new ApiError(400, "No fields provided for update");
+  }
 
   const allowedFields = [
     "fullname",
@@ -352,6 +374,28 @@ export const updateProfileInfo = asyncHandler(async function (req, res) {
     if (req.body[key].trim() === "#") req.body[key] = "";
     updateFields[key] = req.body[key].trim();
   }
+
+  const properLocation = await fetch(
+    `https://nominatim.openstreetmap.org/search?q={${updateFields.area} ${updateFields.city} ${updateFields.district}}&accept-language=en&format=json&limit=1&addressdetails=1`
+  ).then((data) => data.json());
+
+  if (properLocation.length === 0) {
+    throw new ApiError(
+      400,
+      "Invalid Location",
+      "Please Provide Proper Location"
+    );
+  }
+
+  const isInNepal = properLocation[0].address.country;
+
+  if (isInNepal !== "Nepal") {
+    throw new ApiError(400, "Wrong Area", "Provide Locations Inside Nepal");
+  }
+
+  updateFields.area = properLocation[0].display_name.split(",")[0];
+  updateFields.city = properLocation[0].address.city_district;
+  updateFields.district = properLocation[0].address.county;
 
   const user = await User.findByIdAndUpdate(userId, updateFields, {
     runValidators: true,
@@ -495,12 +539,17 @@ export const updatePassword = asyncHandler(async function (req, res) {
   const isCorrectPassword = await user.checkPassword(currentPassword);
 
   if (!isCorrectPassword) {
-    throw new ApiError(400, "Wrong Password");
+    throw new ApiError(400, "", "Wrong Password");
   }
 
   const isSamePassword = await user.checkPassword(updatedPassword);
 
-  if (isSamePassword) throw new ApiError(400, "Same As Old Password");
+  if (isSamePassword)
+    throw new ApiError(
+      400,
+      "Same Password",
+      "New Password Is Same As Old Password"
+    );
 
   user.password = updatedPassword;
   user.refreshToken = undefined;
@@ -1027,12 +1076,7 @@ export const searchJobs = asyncHandler(async function (req, res) {
     .map((val) => val.trim().toLowerCase())
     .filter((query) => query !== "");
 
-  const categories = [
-    "requiredSkills",
-    "experienceLevel",
-    "jobType",
-    "districts",
-  ];
+  const categories = ["requiredSkills", "experienceLevel", "jobType"];
 
   const matchObjects = [];
 

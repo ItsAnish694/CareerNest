@@ -118,7 +118,7 @@ function UpdateProfilePicture() {
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading || !profilePic}
         >
-          {loading ? <LoadingSpinner /> : "Update Picture"}
+          {loading ? <LoadingSpinner variant="inline" /> : "Update Picture"}
         </button>
       </form>
     </div>

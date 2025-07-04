@@ -129,7 +129,7 @@ function UpdateResume() {
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading || !resumeFile}
         >
-          {loading ? <LoadingSpinner /> : "Update Resume"}
+          {loading ? <LoadingSpinner variant="inline" /> : "Update Resume"}
         </button>
       </form>
     </div>

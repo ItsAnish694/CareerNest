@@ -73,7 +73,11 @@ function UpdateUserEmail() {
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading}
         >
-          {loading ? <LoadingSpinner /> : "Send Verification Email"}
+          {loading ? (
+            <LoadingSpinner variant="inline" />
+          ) : (
+            "Send Verification Email"
+          )}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-gray-600">

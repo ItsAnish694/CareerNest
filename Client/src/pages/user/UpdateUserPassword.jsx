@@ -24,6 +24,7 @@ function UpdateUserPassword() {
 
     try {
       const response = await api.patch("/user/profile/password", updateData);
+
       if (response.data.Success) {
         // Password changed successfully, force logout
         await logout("user");
@@ -105,7 +106,7 @@ function UpdateUserPassword() {
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
           disabled={loading}
         >
-          {loading ? <LoadingSpinner /> : "Change Password"}
+          {loading ? <LoadingSpinner variant="inline" /> : "Change Password"}
         </button>
       </form>
     </div>

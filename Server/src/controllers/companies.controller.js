@@ -175,6 +175,28 @@ export const verifyCompany = asyncHandler(async function (req, res) {
     throw new ApiError(400, "Pending", "Verification Request Send");
   }
 
+  const properLocation = await fetch(
+    `https://nominatim.openstreetmap.org/search?q={${companyArea} ${companyCity} ${companyDistrict}}&accept-language=en&format=json&limit=1&addressdetails=1`
+  ).then((data) => data.json());
+
+  if (properLocation.length === 0) {
+    throw new ApiError(
+      400,
+      "Invalid Location",
+      "Please Provide Proper Location"
+    );
+  }
+
+  const normalizedArea = properLocation[0].display_name.split(",")[0];
+  const normalizedCity = properLocation[0].address.city_district;
+  const normalizedDistrict = properLocation[0].address.county;
+
+  const isInNepal = properLocation[0].address.country;
+
+  if (isInNepal !== "Nepal") {
+    throw new ApiError(400, "Wrong Area", "Provide Locations Inside Nepal");
+  }
+
   if (await Company.findOne({ companyPhoneNumber })) {
     throw new ApiError(
       400,
@@ -200,9 +222,9 @@ export const verifyCompany = asyncHandler(async function (req, res) {
 
   company.document = uploadedDocument.secure_url;
   company.companyPhoneNumber = companyPhoneNumber;
-  company.companyDistrict = companyDistrict;
-  company.companyCity = companyCity;
-  company.companyArea = companyArea;
+  company.companyDistrict = normalizedDistrict;
+  company.companyCity = normalizedCity;
+  company.companyArea = normalizedArea;
   company.isVerified = "Pending";
 
   await company.save();
@@ -350,6 +372,28 @@ export const updateCompanyProfileInfo = asyncHandler(async function (req, res) {
     if (req.body[key].trim() === "") continue;
     if (req.body[key].trim() === "#") req.body[key] = "";
     updateFields[key] = req.body[key].trim();
+  }
+
+  const properLocation = await fetch(
+    `https://nominatim.openstreetmap.org/search?q={${updateFields.companyArea} ${updateFields.companyCity} ${updateFields.companyDistrict}}&accept-language=en&format=json&limit=1&addressdetails=1`
+  ).then((data) => data.json());
+
+  if (properLocation.length === 0) {
+    throw new ApiError(
+      400,
+      "Invalid Location",
+      "Please Provide Proper Location"
+    );
+  }
+
+  updateFields.companyArea = properLocation[0].display_name.split(",")[0];
+  updateFields.companyCity = properLocation[0].address.city_district;
+  updateFields.companyDistrict = properLocation[0].address.county;
+
+  const isInNepal = properLocation[0].address.country;
+
+  if (isInNepal !== "Nepal") {
+    throw new ApiError(400, "Wrong Area", "Provide Locations Inside Nepal");
   }
 
   const updatedCompany = await Company.findByIdAndUpdate(

@@ -46,7 +46,7 @@ function VerifyUserEmail() {
       </h2>
       {loading ? (
         <>
-          <LoadingSpinner />
+          <LoadingSpinner variant="inline" />
           <p className="text-gray-700 mt-4">{verificationStatus}</p>
         </>
       ) : (
