@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import LoadingSpinner from "../common/LoadingSpinner";
@@ -25,7 +25,6 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
     return <Navigate to="/" replace />;
   }
 
-  // Redirect unverified company
   if (
     userRole === "company" &&
     !isCompanyVerified &&

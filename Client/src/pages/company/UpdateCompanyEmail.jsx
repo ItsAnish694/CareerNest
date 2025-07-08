@@ -21,15 +21,14 @@ function UpdateCompanyEmail() {
       if (response.data.Success) {
         navigate("/company/profile");
       }
-    } catch {
-      // Error handled globally by interceptor
+    } catch (err) {
+      console.log(err);
     } finally {
       setLoading(false);
     }
   };
 
   if (authLoading) {
-    // Full page loading spinner when auth status is loading
     return <LoadingSpinner message="Checking authentication..." />;
   }
 

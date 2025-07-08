@@ -1,4 +1,3 @@
-// src/contexts/AuthContext.jsx
 import { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
@@ -11,7 +10,6 @@ export const AuthProvider = ({ children }) => {
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Configure axios to send cookies by default
   axios.defaults.withCredentials = true;
 
   const checkAuthStatus = async () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
@@ -48,7 +48,7 @@ function UpdateCompanyProfileInfo() {
         navigate("/company/profile");
       }
     } catch (error) {
-      // Error handled globally
+      console.log(error.message);
     } finally {
       setLoading(false);
     }

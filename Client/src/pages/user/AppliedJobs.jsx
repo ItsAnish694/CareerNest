@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NoDataMessage from "../../components/common/NoDataMessage";
@@ -46,8 +46,8 @@ function AppliedJobs() {
       setAppliedJobs((prev) => prev.filter((job) => job._id !== jobToDelete));
       setJobToDelete(null);
       fetchAppliedJobs();
-    } catch {
-      // Error handled globally
+    } catch (err) {
+      console.log(err.message);
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,6 @@ function AppliedJobs() {
       <h1 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-8">
         My Applied Jobs
       </h1>
-
       {loading ? (
         <LoadingSpinner />
       ) : appliedJobs.length === 0 ? (
@@ -75,8 +74,6 @@ function AppliedJobs() {
               className="relative bg-white rounded-xl border border-gray-100 shadow-md overflow-hidden hover:shadow-lg transition-all duration-300"
             >
               <JobCard job={job} currentUser={user} />
-
-              {/* Status Badge */}
               <div className="absolute top-4 left-4">
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
@@ -90,8 +87,6 @@ function AppliedJobs() {
                   {job.status}
                 </span>
               </div>
-
-              {/* Withdraw Button */}
               <div className="absolute top-4 right-4">
                 <button
                   onClick={() => setJobToDelete(job._id)}
@@ -105,7 +100,6 @@ function AppliedJobs() {
           ))}
         </div>
       )}
-
       {!loading && appliedJobs.length > 0 && (
         <div className="mt-10">
           <Pagination
@@ -116,7 +110,6 @@ function AppliedJobs() {
           />
         </div>
       )}
-
       <Modal
         isOpen={jobToDelete !== null}
         onClose={() => setJobToDelete(null)}

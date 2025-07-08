@@ -5,7 +5,7 @@ import NoDataMessage from "../../components/common/NoDataMessage";
 import JobCard from "../../components/jobs/JobCard";
 import Pagination from "../../components/common/Pagination";
 import { AuthContext } from "../../contexts/AuthContext";
-import Modal from "../../components/common/Modal"; // Assuming you have a Modal component
+import Modal from "../../components/common/Modal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookmark } from "@fortawesome/free-solid-svg-icons";
 
@@ -14,15 +14,15 @@ function BookmarkedJobs() {
   const [bookmarkedJobs, setBookmarkedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [jobToRemove, setJobToRemove] = useState(null); // State to hold job ID for removal confirmation
+  const [jobToRemove, setJobToRemove] = useState(null);
 
-  const limit = 9; // Number of jobs per page
+  const limit = 9;
 
   useEffect(() => {
     if (!authLoading && user) {
       fetchBookmarkedJobs();
     }
-  }, [currentPage, user, authLoading]); // Re-fetch when page or user changes
+  }, [currentPage, user, authLoading]);
 
   const fetchBookmarkedJobs = async () => {
     setLoading(true);
@@ -35,9 +35,8 @@ function BookmarkedJobs() {
       } else {
         setBookmarkedJobs([]);
       }
-    } catch (error) {
+    } catch {
       setBookmarkedJobs([]);
-      // Error handled by interceptor
     } finally {
       setLoading(false);
     }
@@ -56,14 +55,13 @@ function BookmarkedJobs() {
     setLoading(true);
     try {
       await api.delete(`/user/bookmarks/${jobToRemove}`);
-      // toast.success is handled by interceptor
       setBookmarkedJobs(
         bookmarkedJobs.filter((job) => job._id !== jobToRemove)
-      ); // Optimistic UI update
-      setJobToRemove(null); // Close modal
-      fetchBookmarkedJobs(); // Re-fetch to ensure consistency and update counts
+      );
+      setJobToRemove(null);
+      fetchBookmarkedJobs();
     } catch (error) {
-      // toast.error is handled by interceptor
+      console.log(error.message);
     } finally {
       setLoading(false);
     }
@@ -107,7 +105,6 @@ function BookmarkedJobs() {
           ))}
         </div>
       )}
-
       {!loading && bookmarkedJobs.length > 0 && (
         <Pagination
           currentPage={currentPage}
@@ -116,7 +113,6 @@ function BookmarkedJobs() {
           onPageChange={handlePageChange}
         />
       )}
-
       <Modal
         isOpen={jobToRemove !== null}
         onClose={() => setJobToRemove(null)}

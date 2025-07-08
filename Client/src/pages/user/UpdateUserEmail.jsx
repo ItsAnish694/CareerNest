@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
@@ -19,11 +19,10 @@ function UpdateUserEmail() {
         email: newEmail,
       });
       if (response.data.Success) {
-        // Email verification email sent
         navigate("/user/profile");
       }
     } catch (error) {
-      // Error handled by interceptor
+      console.log(error.message);
     } finally {
       setLoading(false);
     }
@@ -47,7 +46,7 @@ function UpdateUserEmail() {
         Change Email Address
       </h2>
       <p className="text-center text-gray-600 mb-8">
-        Your current email:{" "}
+        Your current email:
         <span className="font-semibold text-blue-600">{user.email}</span>
       </p>
       <form onSubmit={handleSubmit} className="space-y-6">

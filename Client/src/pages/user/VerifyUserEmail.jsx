@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -20,10 +20,10 @@ function VerifyUserEmail() {
       }
 
       try {
-        const response = await api.post("/user/profile/verifyEmail", { token }); // Backend expects token in body for POST
+        const response = await api.post("/user/profile/verifyEmail", { token });
         if (response.data.Success) {
           setVerificationStatus("Email successfully updated!");
-          setTimeout(() => navigate("/user/profile"), 3000); // Redirect after success
+          setTimeout(() => navigate("/user/profile"), 3000);
         }
       } catch (error) {
         setVerificationStatus(

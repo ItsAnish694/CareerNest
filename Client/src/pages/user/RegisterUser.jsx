@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../services/api";
 import { toast } from "react-toastify";
@@ -24,7 +24,6 @@ function RegisterUser() {
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
         toast.error("File size must be less than 5MB.");
         setProfilePic(null);
         e.target.value = null;
@@ -53,10 +52,10 @@ function RegisterUser() {
         },
       });
       if (response.data.Success) {
-        navigate("/login"); // Redirect to login page to allow verification process
+        navigate("/login");
       }
     } catch (error) {
-      // toast.error is handled by interceptor
+      console.log(error.message);
     } finally {
       setLoading(false);
     }
@@ -144,7 +143,7 @@ function RegisterUser() {
         </button>
       </form>
       <p className="mt-6 text-center text-gray-600">
-        Already have an account?{" "}
+        Already have an account?
         <Link to="/login" className="text-blue-600 hover:underline">
           Login
         </Link>

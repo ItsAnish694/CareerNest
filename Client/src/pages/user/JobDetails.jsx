@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -16,7 +16,7 @@ import {
   faClock,
   faCalendarAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import Modal from "../../components/common/Modal"; // Assuming you create a Modal component
+import Modal from "../../components/common/Modal";
 
 function JobDetails() {
   const { jobId } = useParams();
@@ -39,58 +39,30 @@ function JobDetails() {
 
   useEffect(() => {
     fetchJobDetails();
-    // checkApplicationAndBookmarkStatus();
-  }, [jobId, user, company]); // Re-fetch if user/company context changes
+  }, [jobId, user, company]);
 
   const fetchJobDetails = async () => {
     setLoading(true);
     try {
-      // Assuming the API endpoint /user/jobs?jobId=${jobId} now directly returns the single job object
-      // if found, or null/empty data if not.
       const response = await api.get(`/user/jobs?jobID=${jobId}`);
 
       if (response.data.Success && response.data.data) {
         setJob(response.data.data);
         setIsApplied(response.data.data.isApplied);
-        setIsBookmarked(response.data.data.isBookmarked); // Directly set the fetched data as the job
+        setIsBookmarked(response.data.data.isBookmarked);
       } else {
-        setJob(null); // No job found or success is false
+        setJob(null);
       }
     } catch (error) {
-      setJob(null); // Set job to null on error
-      // Error handled by interceptor (e.g., toast.error)
+      setJob(null);
+      console.log(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // const checkApplicationAndBookmarkStatus = async () => {
-  //   if (!user || authLoading) {
-  //     setIsApplied(false);
-  //     setIsBookmarked(false);
-  //     return;
-  //   }
-  //   try {
-  //     // Check if applied
-  //     const appliedRes = await api.get("/user/applications");
-  //     if (appliedRes.data.Success && appliedRes.data.data) {
-  //       setIsApplied(appliedRes.data.data.some((app) => app._id === jobId));
-  //     }
-
-  //     // Check if bookmarked
-  //     const bookmarkRes = await api.get("/user/bookmarks");
-  //     if (bookmarkRes.data.Success && bookmarkRes.data.data) {
-  //       setIsBookmarked(bookmarkRes.data.data.some((bm) => bm._id === jobId));
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to check application/bookmark status:", error);
-  //     setIsApplied(false);
-  //     setIsBookmarked(false);
-  //   }
-  // };
-
   const handleApplyJob = async () => {
-    setIsConfirmingApply(false); // Close modal
+    setIsConfirmingApply(false);
     if (!user) {
       toast.info("Please log in as a job seeker to apply.");
       navigate("/login");
@@ -106,22 +78,21 @@ function JobDetails() {
 
     try {
       await api.post(`/user/applications/${jobId}`);
-      // toast.success is handled by interceptor
       setIsApplied(true);
-      checkAuthStatus(); // Update application count in context
+      checkAuthStatus();
     } catch (error) {
-      // toast.error is handled by interceptor
+      console.log(error.message);
     }
   };
 
   const handleDeleteApplication = async () => {
-    setIsConfirmingDeleteApplication(false); // Close modal
+    setIsConfirmingDeleteApplication(false);
     try {
       await api.delete(`/user/applications/${jobId}`);
       setIsApplied(false);
-      checkAuthStatus(); // Update application count in context
+      checkAuthStatus();
     } catch (error) {
-      // toast.error is handled by interceptor
+      console.log(error.message);
     }
   };
 
@@ -133,23 +104,21 @@ function JobDetails() {
     }
     try {
       await api.post(`/user/bookmarks/${jobId}`);
-      // toast.success is handled by interceptor
       setIsBookmarked(true);
-      checkAuthStatus(); // Update bookmark count in context
+      checkAuthStatus();
     } catch (error) {
-      // toast.error is handled by interceptor
+      console.log(error.message);
     }
   };
 
   const handleDeleteBookmark = async () => {
-    setIsConfirmingDeleteBookmark(false); // Close modal
+    setIsConfirmingDeleteBookmark(false);
     try {
       await api.delete(`/user/bookmarks/${jobId}`);
-      // toast.success is handled by interceptor
       setIsBookmarked(false);
-      checkAuthStatus(); // Update bookmark count in context
+      checkAuthStatus();
     } catch (error) {
-      // toast.error is handled by interceptor
+      console.log(error.message);
     }
   };
 
@@ -161,13 +130,11 @@ function JobDetails() {
     return <NoDataMessage message="Job not found or has been removed." />;
   }
 
-  // Check if current user is the company that posted the job
   const isCompanyOwner =
     company && job.companyInfo && company._id === job.companyInfo._id;
 
   return (
     <div className="max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl mx-auto bg-gradient-to-br from-white to-gray-50 p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl md:shadow-2xl my-6 sm:my-8 md:my-10 border border-gray-100">
-      {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
         className="mb-6 sm:mb-8 px-4 py-2 sm:px-5 sm:py-2 bg-gray-200 text-gray-700 rounded-md sm:rounded-lg hover:bg-gray-300 transition-colors flex items-center font-semibold text-base sm:text-lg shadow-sm"
@@ -183,8 +150,6 @@ function JobDetails() {
           {job.companyInfo?.companyName || "Unknown Company"}
         </p>
       </div>
-
-      {/* Job Overview Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 sm:gap-y-5 sm:gap-x-8 text-gray-700 text-base sm:text-lg mb-8 sm:mb-10 p-4 sm:p-6 bg-blue-50 rounded-lg sm:rounded-xl shadow-inner border border-blue-100">
         {job.companyInfo?.companyLocation?.city && (
           <span className="flex items-center capitalize">
@@ -234,19 +199,16 @@ function JobDetails() {
         )}
         {job.applicationDeadline && (
           <span className="flex items-center text-sm sm:text-base lg:text-lg">
-            {/* Responsive text size */}
             <FontAwesomeIcon
               icon={faCalendarAlt}
               className="mr-2 sm:mr-3 lg:mr-4 text-blue-600 text-base sm:text-lg lg:text-xl"
             />
-            {/* Responsive icon size */}
             Deadline:
             {format(new Date(job.applicationDeadline), "PPP (EEEE)")}
           </span>
         )}
       </div>
 
-      {/* Job Description Section */}
       <div className="bg-white p-6 sm:p-8 rounded-lg sm:rounded-xl shadow-md mb-6 sm:mb-8 border border-gray-200">
         <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-5 border-b-2 pb-2 sm:pb-3 border-blue-200">
           Job Description
@@ -256,7 +218,6 @@ function JobDetails() {
         </p>
       </div>
 
-      {/* Skills and Experience Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-10">
         <div className="bg-white p-6 sm:p-8 rounded-lg sm:rounded-xl shadow-md border border-gray-200">
           <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 sm:mb-5 border-b-2 pb-2 sm:pb-3 border-blue-200">
@@ -293,8 +254,6 @@ function JobDetails() {
           </p>
         </div>
       </div>
-
-      {/* Action Buttons */}
       <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mt-6 sm:mt-8">
         {user && user.role === "user" && (
           <>
@@ -342,8 +301,6 @@ function JobDetails() {
           </Link>
         )}
       </div>
-
-      {/* Confirmation Modals (assuming Modal component structure is compatible) */}
       <Modal
         isOpen={isConfirmingApply}
         onClose={() => setIsConfirmingApply(false)}
@@ -356,7 +313,6 @@ function JobDetails() {
           be submitted.
         </p>
       </Modal>
-
       <Modal
         isOpen={isConfirmingDeleteApplication}
         onClose={() => setIsConfirmingDeleteApplication(false)}
@@ -367,7 +323,6 @@ function JobDetails() {
       >
         <p>Are you sure you want to withdraw your application for this job?</p>
       </Modal>
-
       <Modal
         isOpen={isConfirmingDeleteBookmark}
         onClose={() => setIsConfirmingDeleteBookmark(false)}

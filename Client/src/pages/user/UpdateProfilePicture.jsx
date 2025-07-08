@@ -21,14 +21,13 @@ function UpdateProfilePicture() {
       if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
         toast.error("Only .jpeg, .jpg, and .png files are allowed.");
         setProfilePic(null);
-        e.target.value = null; // Clear the input
+        e.target.value = null;
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
         toast.error("File size must be less than 5MB.");
         setProfilePic(null);
-        e.target.value = null; // Clear the input
+        e.target.value = null;
         return;
       }
       setProfilePic(file);
@@ -55,11 +54,11 @@ function UpdateProfilePicture() {
         },
       });
       if (response.data.Success) {
-        await checkAuthStatus(); // Update user info in context
+        await checkAuthStatus();
         navigate("/user/profile");
       }
     } catch (error) {
-      // Error handled by interceptor
+      console.log(error.message);
     } finally {
       setLoading(false);
     }

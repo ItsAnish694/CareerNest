@@ -1,5 +1,5 @@
-import React, { useContext, useEffect } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { useContext, useEffect } from "react";
+import { Routes, Route } from "react-router-dom";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import RegisterUser from "./pages/user/RegisterUser";
@@ -35,8 +35,7 @@ import UpdateResume from "./pages/user/UpdateResume";
 import UpdateCompanyLogo from "./pages/company/UpdateCompanyLogo";
 
 function App() {
-  const { user, company, checkAuthStatus } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const { checkAuthStatus } = useContext(AuthContext);
 
   useEffect(() => {
     checkAuthStatus();
@@ -47,7 +46,6 @@ function App() {
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <Routes>
-          {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/user/register" element={<RegisterUser />} />
@@ -57,12 +55,8 @@ function App() {
           <Route path="/user/verifyemail" element={<VerifyUserEmail />} />
           <Route path="/company/verifyemail" element={<VerifyCompanyEmail />} />
           <Route path="/jobs" element={<JobListing />} />
-          {/* All jobs for non-logged-in as well */}
           <Route path="/jobs/:jobId" element={<JobDetails />} />
-          {/* Job details for non-logged-in as well */}
           <Route path="/search" element={<JobListing />} />
-          {/* Search results displayed on job listing page */}
-          {/* User Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["user"]} />}>
             <Route path="/user/profile" element={<UserProfile />} />
             <Route
@@ -92,7 +86,6 @@ function App() {
             <Route path="/user/applied-jobs" element={<AppliedJobs />} />
             <Route path="/user/bookmarked-jobs" element={<BookmarkedJobs />} />
           </Route>
-          {/* Company Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
             <Route path="/company/profile" element={<CompanyProfile />} />
             <Route
@@ -119,7 +112,6 @@ function App() {
               element={<JobApplications />}
             />
           </Route>
-          {/* Fallback for unknown routes */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

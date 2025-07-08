@@ -87,7 +87,7 @@ function VerifyCompany() {
         }
       }
     } catch (error) {
-      // Error handled by interceptor
+      console.log(error.message);
     } finally {
       setLoading(false);
     }
@@ -169,7 +169,11 @@ function VerifyCompany() {
           disabled={loading}
           className="w-full flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors"
         >
-          {loading ? <LoadingSpinner size={20} /> : "Submit for Verification"}
+          {loading ? (
+            <LoadingSpinner variant="inline" />
+          ) : (
+            "Submit for Verification"
+          )}
         </button>
       </form>
     </div>

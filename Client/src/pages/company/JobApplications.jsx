@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -59,6 +59,7 @@ function JobApplications() {
       setApplications(resApps.data?.data || []);
     } catch (err) {
       setApplications([]);
+      console.log(err.message);
     } finally {
       setLoading(false);
     }
@@ -98,7 +99,7 @@ function JobApplications() {
       toast.success(`Application marked as ${status}.`);
       fetchApplications();
     } catch (err) {
-      // handled by interceptor
+      console.log(err.message);
     } finally {
       setLoading(false);
     }
@@ -119,6 +120,7 @@ function JobApplications() {
       toast.success("Resume downloaded.");
     } catch (err) {
       toast.error("Download failed.");
+      console.log(err.message);
     } finally {
       setIsDownloading(false);
     }

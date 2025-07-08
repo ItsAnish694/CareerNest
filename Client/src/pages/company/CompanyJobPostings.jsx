@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import api from "../../services/api";
@@ -54,7 +54,7 @@ function CompanyJobPostings() {
       setJobToDelete(null);
       fetchJobs();
     } catch (error) {
-      // Error handled by your API interceptor
+      console.log(error.message);
     } finally {
       setIsDeleting(false);
     }
@@ -85,7 +85,6 @@ function CompanyJobPostings() {
 
   return (
     <div className="max-w-7xl mx-auto bg-white p-6 rounded-xl shadow-lg my-8 border border-gray-100">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 border-b pb-4">
         <h1 className="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">
           My Job Postings
@@ -98,12 +97,10 @@ function CompanyJobPostings() {
         </Link>
       </div>
 
-      {/* Job List */}
       {jobs.length === 0 ? (
         <NoDataMessage message="You haven't posted any jobs yet. Start by posting your first job!" />
       ) : (
         <div className="overflow-x-auto rounded-lg border">
-          {/* Table Header (visible on md+) */}
           <div className="hidden md:grid md:grid-cols-[1.5fr_1fr_1fr_1fr_0.5fr_0.7fr_1.2fr_1fr] bg-blue-600 text-white font-semibold">
             <div className="px-4 py-2">Job Title</div>
             <div className="px-4 py-2">Job Type</div>

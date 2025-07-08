@@ -6,22 +6,20 @@ import JobCard from "../../components/jobs/JobCard";
 import Pagination from "../../components/common/Pagination";
 import { useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
-// import { toast } from "react-toastify";
 
 function JobListing() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [jobTypeFilter, setJobTypeFilter] = useState("recommended"); // 'recommended', 'top', 'latest'
+  const [jobTypeFilter, setJobTypeFilter] = useState("recommended");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user } = useContext(AuthContext); // Get user from context
-  const [totalJobsCount, setTotalJobsCount] = useState(0); // New state to store total count
+  const { user } = useContext(AuthContext);
+  const [totalJobsCount, setTotalJobsCount] = useState(0);
 
-  const limit = 9; // Number of jobs per page
+  const limit = 9;
 
   useEffect(() => {
-    // Sync state with URL params on initial load
     const typeParam = searchParams.get("type") || "recommended";
     const pageParam = parseInt(searchParams.get("page")) || 1;
     const qParam = searchParams.get("q") || "";
@@ -49,25 +47,17 @@ function JobListing() {
 
       if (Success) {
         setJobs(data);
-
-        // Assuming your backend response includes a totalCount field for pagination
-        if (totalCount !== undefined) {
-          setTotalJobsCount(totalCount);
-        } else {
-          // Fallback if totalCount is not provided by backend, though it's recommended
-          // to get the actual total from the backend for accurate pagination.
-          // For now, if totalCount is missing, we'll assume the current page's length.
-          // This might lead to inaccurate total pages if not all jobs are fetched.
-          setTotalJobsCount(response.data.data.length);
-        }
+        setTotalJobsCount(
+          totalCount !== undefined ? totalCount : response.data.data.length
+        );
       } else {
         setJobs([]);
-        setTotalJobsCount(0); // Reset total count on failure
+        setTotalJobsCount(0);
       }
     } catch (error) {
-      setJobs([]); // Clear jobs on error
-      setTotalJobsCount(0); // Reset total count on error
-      // Error handled by interceptor
+      setJobs([]);
+      setTotalJobsCount(0);
+      console.log(error.message);
     } finally {
       setLoading(false);
     }
@@ -80,14 +70,14 @@ function JobListing() {
 
   const handleTypeChange = (type) => {
     setJobTypeFilter(type);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setCurrentPage(1);
     updateSearchParams(type, 1, searchQuery);
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setCurrentPage(1); // Reset to first page for new search
-    setJobTypeFilter("recommended"); // Reset filter for search
+    setCurrentPage(1);
+    setJobTypeFilter("recommended");
     updateSearchParams("recommended", 1, searchQuery);
   };
 
@@ -97,7 +87,6 @@ function JobListing() {
       newParams.set("q", q);
     }
     if (type && !q) {
-      // Only add type param if not a search query
       newParams.set("type", type);
     }
     newParams.set("page", page.toString());
@@ -119,7 +108,7 @@ function JobListing() {
           <input
             type="text"
             className="w-full p-3 sm:p-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-3 focus:ring-blue-400 focus:border-transparent transition-all duration-200 flex-grow text-base sm:text-lg placeholder-gray-500"
-            placeholder="Search by skill, job type, location (e.g., React, full time, Kathmandu)"
+            placeholder="Search by skill, type, level (e.g., React, Full Time, Entry Level)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             disabled={loading}

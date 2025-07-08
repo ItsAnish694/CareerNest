@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -16,7 +16,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setErrorMessage(""); // clear any previous error
+    setErrorMessage("");
 
     const result = await login(role, email, password);
     setLoading(false);

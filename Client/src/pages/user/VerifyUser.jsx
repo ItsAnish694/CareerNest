@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { toast } from "react-toastify";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const experiencedYearsOptions = [
-  "No Experience",
-  "Less than 1 year",
   "1 year",
   "2 years",
   "3 years",
@@ -27,16 +25,13 @@ function VerifyUser() {
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
   const [experiencedYears, setExperiencedYears] = useState("No Experience");
-  const [skills, setSkills] = useState(""); // Comma separated string
+  const [skills, setSkills] = useState("");
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
-    // Optionally, you might want to call an API to check token validity on load
-    // For now, we'll just assume the token is in the URL and attempt to use it on form submission.
-    // If the token is invalid/expired, the backend will reject the POST request.
-    setInitialCheckDone(true); // Indicate that component is ready to take input
+    setInitialCheckDone(true);
   }, [token]);
 
   const handleFileChange = (e) => {
@@ -60,7 +55,6 @@ function VerifyUser() {
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
         toast.error("File size must be less than 5MB.");
         setResume(null);
         e.target.value = null;
@@ -104,11 +98,10 @@ function VerifyUser() {
         },
       });
       if (response.data.Success) {
-        // toast.success is handled by interceptor
-        navigate("/login"); // User is verified, prompt to login
+        navigate("/login");
       }
     } catch (error) {
-      // toast.error is handled by interceptor
+      console.log(error.message);
     } finally {
       setLoading(false);
     }

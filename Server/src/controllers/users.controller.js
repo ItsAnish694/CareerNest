@@ -1068,6 +1068,7 @@ export const getAllJobsDetails = asyncHandler(async function (req, res) {
 
 export const searchJobs = asyncHandler(async function (req, res) {
   const { q, limit = "9", page = "1" } = req.query;
+
   const userID = req.user._id;
   const skip = (Number(page) - 1) * Number(limit);
   const aggregationLimit = 100;
@@ -1113,15 +1114,19 @@ export const searchJobs = asyncHandler(async function (req, res) {
     .lean();
 
   const totalCount = await Job.countDocuments({
-    $or: matchObjects,
-    applicationDeadline: { $gte: new Date() },
+    $and: [
+      { $or: matchObjects },
+      { applicationDeadline: { $gte: new Date() } },
+    ],
   });
 
   const searchedJobs = await Job.aggregate([
     {
       $match: {
-        $or: matchObjects,
-        applicationDeadline: { $gte: new Date() },
+        $and: [
+          { $or: matchObjects },
+          { applicationDeadline: { $gte: new Date() } },
+        ],
       },
     },
     {
@@ -1173,7 +1178,7 @@ export const searchJobs = asyncHandler(async function (req, res) {
     },
   ]);
 
-  if (!(searchJobs.length > 0)) {
+  if (!(searchedJobs.length > 0)) {
     throw new ApiError(
       404,
       "No Jobs Found",
