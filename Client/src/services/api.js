@@ -2,6 +2,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const API_BASE_URL = "https://careernest-backend-plwn.onrender.com/api/v1";
+// const API_BASE_URL = "/api/v1";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
