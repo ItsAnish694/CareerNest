@@ -179,7 +179,12 @@ export const verifyCompany = asyncHandler(async function (req, res) {
   );
 
   const properLocation = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`
+    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`,
+    {
+      headers: {
+        "User-Agent": `CareerNest/1.0 (${process.env.BUSSINESS_EMAIL})`,
+      },
+    }
   ).then((data) => data.json());
 
   if (properLocation.length === 0) {
@@ -289,7 +294,7 @@ export const loginCompany = asyncHandler(async function (req, res) {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "Lax", // for localHost
+    sameSite: "none", // for localHost
   };
 
   return res
@@ -382,7 +387,12 @@ export const updateCompanyProfileInfo = asyncHandler(async function (req, res) {
   );
 
   const properLocation = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`
+    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`,
+    {
+      headers: {
+        "User-Agent": `CareerNest/1.0 (${process.env.BUSSINESS_EMAIL})`,
+      },
+    }
   ).then((data) => data.json());
 
   if (properLocation.length === 0) {

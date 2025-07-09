@@ -302,6 +302,7 @@ export const loginUser = asyncHandler(async function (req, res) {
   const options = {
     httpOnly: true,
     secure: true,
+    sameSite: "none",
   };
 
   return res
@@ -391,7 +392,12 @@ export const updateProfileInfo = asyncHandler(async function (req, res) {
   );
 
   const properLocation = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`
+    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`,
+    {
+      headers: {
+        "User-Agent": `CareerNest/1.0 (${process.env.BUSSINESS_EMAIL})`,
+      },
+    }
   ).then((data) => data.json());
 
   if (properLocation.length === 0) {
