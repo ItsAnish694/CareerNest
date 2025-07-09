@@ -174,9 +174,12 @@ export const verifyCompany = asyncHandler(async function (req, res) {
   if (company.isVerified === "Pending") {
     throw new ApiError(400, "Pending", "Verification Request Send");
   }
+  const query = encodeURIComponent(
+    `${companyArea} ${companyCity} ${companyDistrict}`
+  );
 
   const properLocation = await fetch(
-    `https://nominatim.openstreetmap.org/search?q={${companyArea} ${companyCity} ${companyDistrict}}&accept-language=en&format=json&limit=1&addressdetails=1`
+    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`
   ).then((data) => data.json());
 
   if (properLocation.length === 0) {
@@ -374,8 +377,12 @@ export const updateCompanyProfileInfo = asyncHandler(async function (req, res) {
     updateFields[key] = req.body[key].trim();
   }
 
+  const query = encodeURIComponent(
+    `${updateFields.companyArea} ${updateFields.companyCity} ${updateFields.companyDistrict}`
+  );
+
   const properLocation = await fetch(
-    `https://nominatim.openstreetmap.org/search?q={${updateFields.companyArea} ${updateFields.companyCity} ${updateFields.companyDistrict}}&accept-language=en&format=json&limit=1&addressdetails=1`
+    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`
   ).then((data) => data.json());
 
   if (properLocation.length === 0) {

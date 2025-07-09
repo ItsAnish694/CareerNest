@@ -138,8 +138,6 @@ export const verifyUser = asyncHandler(async function (req, res) {
 
   const { phoneNumber, district, city, area, experiencedYears } = req.body;
 
-  console.log(req.body.skills);
-
   const skills = JSON.parse(req.body.skills);
 
   if (
@@ -186,9 +184,10 @@ export const verifyUser = asyncHandler(async function (req, res) {
       "User With This Id Is Already Verified"
     );
   }
+  const query = encodeURIComponent(`${area} ${city} ${district}`);
 
   const properLocation = await fetch(
-    `https://nominatim.openstreetmap.org/search?q={${area} ${city} ${district}}&accept-language=en&format=json&limit=1&addressdetails=1`
+    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`
   ).then((data) => data.json());
 
   if (properLocation.length === 0) {
@@ -378,8 +377,12 @@ export const updateProfileInfo = asyncHandler(async function (req, res) {
     updateFields[key] = req.body[key].trim();
   }
 
+  const query = encodeURIComponent(
+    `${updateFields.area} ${updateFields.city} ${updateFields.district}`
+  );
+
   const properLocation = await fetch(
-    `https://nominatim.openstreetmap.org/search?q={${updateFields.area} ${updateFields.city} ${updateFields.district}}&accept-language=en&format=json&limit=1&addressdetails=1`
+    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`
   ).then((data) => data.json());
 
   if (properLocation.length === 0) {
