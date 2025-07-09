@@ -187,7 +187,12 @@ export const verifyUser = asyncHandler(async function (req, res) {
   const query = encodeURIComponent(`${area} ${city} ${district}`);
 
   const properLocation = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`
+    `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`,
+    {
+      headers: {
+        "User-Agent": `CareerNest/1.0 (${process.env.BUSSINESS_EMAIL})`,
+      },
+    }
   ).then((data) => {
     console.log(data);
 
