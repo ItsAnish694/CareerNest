@@ -193,11 +193,7 @@ export const verifyUser = asyncHandler(async function (req, res) {
         "User-Agent": `CareerNest/1.0 (${process.env.BUSSINESS_EMAIL})`,
       },
     }
-  ).then((data) => {
-    console.log(data);
-
-    return data.json();
-  });
+  ).then((data) => data.json());
 
   if (properLocation.length === 0) {
     throw new ApiError(
