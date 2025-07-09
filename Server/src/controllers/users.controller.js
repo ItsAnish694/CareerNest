@@ -188,7 +188,11 @@ export const verifyUser = asyncHandler(async function (req, res) {
 
   const properLocation = await fetch(
     `https://nominatim.openstreetmap.org/search?q=${query}&accept-language=en&format=json&limit=1&addressdetails=1`
-  ).then((data) => data.json());
+  ).then((data) => {
+    console.log(data);
+
+    return data.json();
+  });
 
   if (properLocation.length === 0) {
     throw new ApiError(
@@ -1214,3 +1218,13 @@ export const homePage = asyncHandler(async function (req, res) {
   }
   return res.status(200).json(new ApiResponse(200, null, "User Is Logged In"));
 });
+
+// {
+//     "Success": false,
+//     "Error": {
+//         "Status": 500,
+//         "Name": "SyntaxError",
+//         "Message": "Unexpected token '<', \"<html>\n<he\"... is not valid JSON",
+//         "Stack": "SyntaxError: Unexpected token '<', \"<html>\n<he\"... is not valid JSON\n    at JSON.parse (<anonymous>)\n    at parseJSONFromBytes (node:internal/deps/undici/undici:5738:19)\n    at successSteps (node:internal/deps/undici/undici:5719:27)\n    at fullyReadBody (node:internal/deps/undici/undici:4609:9)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async consumeBody (node:internal/deps/undici/undici:5728:7)\n    at async file:///opt/render/project/src/Server/src/controllers/users.controller.js:189:26\n    at async file:///opt/render/project/src/Server/src/utils/asyncHandler.util.js:3:5"
+//     }
+// }
