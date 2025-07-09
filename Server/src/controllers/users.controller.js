@@ -138,8 +138,8 @@ export const verifyUser = asyncHandler(async function (req, res) {
 
   const { phoneNumber, district, city, area, experiencedYears } = req.body;
 
-  // const skills = JSON.parse(req.body.skills);
-  const skills = req.body.skills;
+  const skills = JSON.parse(req.body.skills);
+
   if (
     [phoneNumber, district, city, area, experiencedYears].some(
       (val) => !val?.trim()
