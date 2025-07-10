@@ -906,7 +906,7 @@ export const getAllJobsPosted = asyncHandler(async function (req, res) {
     throw new ApiError(400, "Not a Valid ID", "Company ID is not a valid ID");
   }
 
-  const jobInfos = Job.aggregate([
+  const jobInfos = await Job.aggregate([
     {
       $match: { companyID },
     },
