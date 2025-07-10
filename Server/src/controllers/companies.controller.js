@@ -908,7 +908,7 @@ export const getAllJobsPosted = asyncHandler(async function (req, res) {
 
   const jobInfos = await Job.aggregate([
     {
-      $match: { companyID: mongoose.Types.ObjectId(companyID) },
+      $match: { companyID: new mongoose.Types.ObjectId(companyID) },
     },
     { $sort: { createdAt: -1 } },
     { $skip: Number(skip) },
