@@ -1,7 +1,6 @@
 import multer from "multer";
 import path from "path";
 
-// Allowed MIME types
 const allowedMimeTypes = [
   "application/pdf",
   "application/msword", // .doc
