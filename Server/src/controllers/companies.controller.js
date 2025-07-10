@@ -933,6 +933,8 @@ export const getAllJobsPosted = asyncHandler(async function (req, res) {
     },
   ]);
 
+  console.log(jobInfos);
+
   // const jobInfos = await Job.find({ companyID })
   //   .select("-companyID")
   //   .sort({ createdAt: -1 })
