@@ -941,15 +941,6 @@ export const getAllJobsPosted = asyncHandler(async function (req, res) {
     },
   ]);
 
-  console.log(jobInfos);
-
-  // const jobInfos = await Job.find({ companyID })
-  //   .select("-companyID")
-  //   .sort({ createdAt: -1 })
-  //   .skip(Number(skip))
-  //   .limit(Number(limit))
-  //   .lean();
-
   res.status(200).json(new ApiResponse(200, jobInfos, ""));
 });
 
