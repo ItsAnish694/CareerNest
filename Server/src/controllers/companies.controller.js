@@ -927,8 +927,16 @@ export const getAllJobsPosted = asyncHandler(async function (req, res) {
     },
     {
       $project: {
-        companyID: 0,
-        allApplications: 0,
+        jobTitle: 1,
+        applicationCount: 1,
+        jobDescription: 1,
+        requiredSkills: 1,
+        jobType: 1,
+        requiredExperience: 1,
+        experienceLevel: 1,
+        salary: 1,
+        vacancies: 1,
+        applicationDeadline: 1,
       },
     },
   ]);
