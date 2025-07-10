@@ -6,6 +6,7 @@ import {
   applyJobApplication,
   deleteBookmarkJob,
   deleteJobApplication,
+  deleteUserAccount,
   getAllBookmarks,
   getAllJobsDetails,
   getAppliedJobs,
@@ -50,6 +51,7 @@ userRoute.route("/profile/email").patch(updateEmail);
 userRoute.route("/profile/verifyEmail").post(verifyEmail);
 userRoute.route("/profile").get(userProfile).patch(updateProfileInfo);
 userRoute.route("/profile/skills").patch(updateUserSkills);
+userRoute.route("/profile/deleteAccount").delete(deleteUserAccount);
 
 //Application Related Routes
 userRoute

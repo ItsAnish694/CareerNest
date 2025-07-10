@@ -1,12 +1,19 @@
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NoDataMessage from "../../components/common/NoDataMessage";
+import Modal from "../../components/common/Modal";
+import api from "../../services/api";
+import { toast } from "react-toastify";
 
 function UserProfile() {
-  const { user, loading } = useContext(AuthContext);
+  const { user, loading, logout } = useContext(AuthContext);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading) {
@@ -14,12 +21,30 @@ function UserProfile() {
     }
   }, [loading]);
 
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      await api.delete("/user/profile/deleteAccount");
+      toast.success("Account deleted successfully! Redirecting...");
+      logout();
+      navigate("/");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to delete account. Please try again."
+      );
+    } finally {
+      setIsDeletingAccount(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   if (profileLoading) return <LoadingSpinner />;
   if (!user)
     return <NoDataMessage message="User profile not found. Please log in." />;
 
   const defaultProfilePicture =
-    "https://res.cloudinary.com/dcsgpah7o/raw/upload/v1750015844/yhfkchms5dvz9we2nvga.png";
+    "https://res.cloudinary.com/dcsgpah7o/image/upload/v1750015844/ChatGPT_Image_Jun_16_2025_01_15_18_AM_jap5gt.png";
 
   return (
     <div className="max-w-6xl mx-auto bg-white p-5 sm:p-8 md:p-10 rounded-xl shadow-2xl my-8 border border-gray-100 transition-all">
@@ -144,9 +169,40 @@ function UserProfile() {
               to="/user/profile/change-email"
               label="Change Email"
             />
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="w-full sm:w-auto px-5 py-2.5 text-center rounded-lg font-semibold transition-colors shadow-md bg-red-600 text-white hover:bg-red-700"
+            >
+              Delete Account
+            </button>
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Confirm Account Deletion"
+        onConfirm={handleDeleteAccount}
+        confirmText={
+          isDeletingAccount ? (
+            <LoadingSpinner variant="inline" />
+          ) : (
+            "Yes, Delete My Account"
+          )
+        }
+        confirmButtonClass="bg-red-600 hover:bg-red-700"
+        isConfirmDisabled={isDeletingAccount}
+      >
+        <p>
+          Are you absolutely sure you want to delete your account? This action
+          cannot be undone.
+        </p>
+        <p className="text-sm text-red-500 mt-2">
+          All your data, including applications and bookmarks, will be
+          permanently removed.
+        </p>
+      </Modal>
     </div>
   );
 }

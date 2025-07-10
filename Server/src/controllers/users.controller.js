@@ -184,6 +184,7 @@ export const verifyUser = asyncHandler(async function (req, res) {
       "User With This Id Is Already Verified"
     );
   }
+
   const query = encodeURIComponent(`${area} ${city} ${district}`);
 
   const properLocation = await fetch(
@@ -252,7 +253,6 @@ export const verifyUser = asyncHandler(async function (req, res) {
 });
 
 export const loginUser = asyncHandler(async function (req, res) {
-  // const { email, password } = req.body;
   const email = req.body?.userEmail;
   const password = req.body?.userPassword;
 
@@ -583,6 +583,36 @@ export const updatePassword = asyncHandler(async function (req, res) {
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, null, "Successfully Updated Password"));
+});
+
+export const deleteUserAccount = asyncHandler(async function (req, res) {
+  const userID = req.user._id;
+
+  if (!mongoose.isValidObjectId(userID)) {
+    throw new ApiError(400, "Invalid ID", "The ID You Provided Is Invalid");
+  }
+
+  const userInfo = await User.findByIdAndDelete(userID);
+
+  if (!userInfo) {
+    throw new ApiError(404, "User Not Found", "User Doesn't Exist");
+  }
+
+  if (
+    !userInfo.profilePicture.endsWith(
+      "ChatGPT_Image_Jun_16_2025_01_15_18_AM_jap5gt.png"
+    )
+  ) {
+    await deleteCloudinary(userInfo.profilePicture);
+  }
+  await deleteCloudinary(userInfo.resumeLink);
+
+  await Application.deleteMany({ userID });
+  await Bookmark.deleteMany({ userID });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "User Successfully deleted"));
 });
 
 export const updateEmail = asyncHandler(async function (req, res) {
@@ -1225,13 +1255,3 @@ export const homePage = asyncHandler(async function (req, res) {
   }
   return res.status(200).json(new ApiResponse(200, null, "User Is Logged In"));
 });
-
-// {
-//     "Success": false,
-//     "Error": {
-//         "Status": 500,
-//         "Name": "SyntaxError",
-//         "Message": "Unexpected token '<', \"<html>\n<he\"... is not valid JSON",
-//         "Stack": "SyntaxError: Unexpected token '<', \"<html>\n<he\"... is not valid JSON\n    at JSON.parse (<anonymous>)\n    at parseJSONFromBytes (node:internal/deps/undici/undici:5738:19)\n    at successSteps (node:internal/deps/undici/undici:5719:27)\n    at fullyReadBody (node:internal/deps/undici/undici:4609:9)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async consumeBody (node:internal/deps/undici/undici:5728:7)\n    at async file:///opt/render/project/src/Server/src/controllers/users.controller.js:189:26\n    at async file:///opt/render/project/src/Server/src/utils/asyncHandler.util.js:3:5"
-//     }
-// }
