@@ -906,12 +906,36 @@ export const getAllJobsPosted = asyncHandler(async function (req, res) {
     throw new ApiError(400, "Not a Valid ID", "Company ID is not a valid ID");
   }
 
-  const jobInfos = await Job.find({ companyID })
-    .select("-companyID")
-    .sort({ createdAt: -1 })
-    .skip(Number(skip))
-    .limit(Number(limit))
-    .lean();
+  const jobInfos = Job.aggregate([
+    {
+      $match: { companyID },
+    },
+    {
+      $lookup: {
+        from: "applications",
+        foreignField: "jobID",
+        localField: "_id",
+        as: "allApplications",
+      },
+    },
+
+    {
+      $addFields: { applicationCount: { $size: "$allApplications" } },
+    },
+    {
+      $project: {
+        companyID: 0,
+        allApplications: 0,
+      },
+    },
+  ]);
+
+  // const jobInfos = await Job.find({ companyID })
+  //   .select("-companyID")
+  //   .sort({ createdAt: -1 })
+  //   .skip(Number(skip))
+  //   .limit(Number(limit))
+  //   .lean();
 
   res.status(200).json(new ApiResponse(200, jobInfos, ""));
 });

@@ -66,12 +66,13 @@ const jobSchema = new Schema(
       type: Date,
       required: true,
     },
-    applicationCount: {
-      type: Number,
-      default: 0,
-    },
   },
   { timestamps: true }
 );
 
 export const Job = model("Job", jobSchema);
+
+//  applicationCount: {
+//     type: Number,
+//     default: 0,
+//   },
