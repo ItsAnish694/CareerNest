@@ -910,6 +910,9 @@ export const getAllJobsPosted = asyncHandler(async function (req, res) {
     {
       $match: { companyID },
     },
+    { $sort: { createdAt: -1 } },
+    { $skip: Number(skip) },
+    { $limit: Number(limit) },
     {
       $lookup: {
         from: "applications",
