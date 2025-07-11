@@ -1124,23 +1124,27 @@ export const searchJobs = asyncHandler(async function (req, res) {
     .map((val) => val.trim().toLowerCase())
     .filter((query) => query !== "");
 
-  const categories = ["requiredSkills", "experienceLevel", "jobType"];
-
-  const matchObjects = [];
-
-  for (const categorie of categories) {
-    matchObjects.push(
-      ...searchDictionary[categorie]
-        .filter((dictionaryValue) =>
-          queryArray.some((val) => dictionaryValue.startsWith(val))
-        )
-        .map((filteredValue) => ({
-          [categorie]: new RegExp(`^${filteredValue}`, "i"),
-        }))
+  if (queryArray.length > 10) {
+    throw new ApiError(
+      400,
+      "Too Many Search Params",
+      "Too Many Search Parameters"
     );
   }
 
-  if (!(matchObjects.length > 0)) {
+  const categories = ["requiredSkills", "experienceLevel", "jobType"];
+
+  const allKeyWords = [...queryArray];
+
+  for (const categorie of categories) {
+    allKeyWords.push(
+      ...searchDictionary[categorie].filter((dictionaryValue) =>
+        queryArray.some((val) => dictionaryValue.startsWith(val))
+      )
+    );
+  }
+
+  if (!(allKeyWords.length > 0)) {
     throw new ApiError(
       404,
       "No Jobs Found",
@@ -1160,9 +1164,13 @@ export const searchJobs = asyncHandler(async function (req, res) {
     .select("-refreshToken -password")
     .lean();
 
+  const searchString = Array.from(
+    new Set(allKeyWords.join(" ").split(" "))
+  ).join(" ");
+
   const totalCount = await Job.countDocuments({
     $and: [
-      { $or: matchObjects },
+      { $text: { $search: searchString } },
       { applicationDeadline: { $gte: new Date() } },
     ],
   });
@@ -1171,13 +1179,18 @@ export const searchJobs = asyncHandler(async function (req, res) {
     {
       $match: {
         $and: [
-          { $or: matchObjects },
+          { $text: { $search: searchString } },
           { applicationDeadline: { $gte: new Date() } },
         ],
       },
     },
     {
-      $sort: { createdAt: -1 },
+      $addFields: {
+        score: { $meta: "textScore" },
+      },
+    },
+    {
+      $sort: { score: -1, createdAt: -1 },
     },
     { $skip: skip },
     {

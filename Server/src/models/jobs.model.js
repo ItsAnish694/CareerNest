@@ -11,7 +11,6 @@ const jobSchema = new Schema(
       required: true,
       trim: true,
       lowercase: true,
-      index: "text",
     },
     jobDescription: {
       type: String,
@@ -39,7 +38,6 @@ const jobSchema = new Schema(
       trim: true,
       lowercase: true,
       required: true,
-      index: 1,
     },
     requiredExperience: {
       type: String,
@@ -50,7 +48,6 @@ const jobSchema = new Schema(
       type: String,
       enum: ["entry-level", "mid-level", "senior-level"],
       lowercase: true,
-      index: 1,
     },
     salary: {
       type: String,
@@ -70,9 +67,12 @@ const jobSchema = new Schema(
   { timestamps: true }
 );
 
-export const Job = model("Job", jobSchema);
+jobSchema.index({
+  jobTitle: "text",
+  jobDescription: "text",
+  requiredSkills: "text",
+  jobType: "text",
+  experienceLevel: "text",
+});
 
-//  applicationCount: {
-//     type: Number,
-//     default: 0,
-//   },
+export const Job = model("Job", jobSchema);
