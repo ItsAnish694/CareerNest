@@ -11,8 +11,8 @@ export function calculateJobMatchScores(jobs = [], user) {
     const skillMatchedPercent =
       (matchedSkills.length / totalSkills.length) * 100 || 0;
 
-    let requiredExp = Number(job.requiredExperience?.split(" ")[0] || 0);
-    let userExp = Number(user.experiencedYears?.split(" ")[0] || 0);
+    let requiredExp = Number(job.requiredExperience?.split(" ")[0]) || 0;
+    let userExp = Number(user.experiencedYears?.split(" ")[0]) || 0;
 
     // Prevent divide-by-zero
     if (requiredExp === 0 && userExp === 0) {

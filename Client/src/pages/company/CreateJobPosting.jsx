@@ -16,6 +16,7 @@ const jobTypeOptions = [
 const experienceLevelOptions = ["entry-level", "mid-level", "senior-level"];
 
 const experienceYearsOptions = [
+  "No Experience",
   "1 year",
   "2 years",
   "3 years",

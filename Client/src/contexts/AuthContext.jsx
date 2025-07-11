@@ -3,8 +3,7 @@ import axios from "axios";
 
 export const AuthContext = createContext();
 
-// const API_BASE_URL = "/api/v1";
-const API_BASE_URL = "https://careernest-backend-plwn.onrender.com/api/v1";
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

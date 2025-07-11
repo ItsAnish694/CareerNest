@@ -8,8 +8,8 @@ export default async function databaseConnection() {
     if (!mongoUrl) {
       throw new Error("MONGODB_URL not defined in .env");
     }
-    // const conn = await connect(`mongodb://localhost:27017/${DB_NAME}`); //For Local Server Offline
-    const conn = await connect(`${mongoUrl}/${DB_NAME}`); //For Cloud Server Online
+    const conn = await connect(`${mongoUrl}/${DB_NAME}`);
+
     console.log(`Database Connected: ${conn.connection.host}`);
   } catch (error) {
     console.log(`Database Connection Error: ${error.message}`);
