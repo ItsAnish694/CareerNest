@@ -1,9 +1,6 @@
 # 🚀 CareerNest — Your Next Career Starts Here!
 
 [![Deploy on Render](https://img.shields.io/badge/Visit-Live%20Site-29c?logo=render)](https://careernest-frontend-xcuo.onrender.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![GitHub repo size](https://img.shields.io/github/repo-size/your-username/careernest-frontend)
-![GitHub last commit](https://img.shields.io/github/last-commit/your-username/careernest-frontend)
 
 ---
 
