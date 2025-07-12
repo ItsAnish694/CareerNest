@@ -15,6 +15,7 @@ import { Job } from "../models/jobs.model.js";
 import { Application } from "../models/applications.model.js";
 import { Bookmark } from "../models/bookmarks.model.js";
 import { User } from "../models/users.model.js";
+import { Notification } from "../models/notifications.model.js";
 
 export const registerCompany = asyncHandler(async function (req, res) {
   const { companyName, companyEmail, companyPassword } = req.body;
@@ -700,7 +701,7 @@ export const createJobPosting = asyncHandler(async function (req, res) {
     companyID: companyID,
   };
 
-  if (salary) availableFields.salary = salary;
+  if (salary) availableFields.salary = Number(salary) ? salary : "Negotiable";
 
   const createdJob = await Job.create(availableFields);
 
@@ -723,7 +724,11 @@ export const deleteJobPosting = asyncHandler(async function (req, res) {
   const companyID = req.user._id;
 
   if (!mongoose.isValidObjectId(jobID)) {
-    throw new ApiError(400, "Not Valid MongoID", "JobID is Not Valid");
+    throw new ApiError(400, "Not Valid MongoID", "Invalid Job");
+  }
+
+  if (!mongoose.isValidObjectId(companyID)) {
+    throw new ApiError(400, "Not Valid MongoID", "Invalid Company");
   }
 
   const jobInfo = await Job.findById(jobID);
@@ -736,9 +741,31 @@ export const deleteJobPosting = asyncHandler(async function (req, res) {
     throw new ApiError(403, "Forbidden", "You Can't Delete This Job");
   }
 
-  await jobInfo.deleteOne();
-  await Application.deleteMany({ jobID });
-  await Bookmark.deleteMany({ jobID });
+  const allApplicationsForThisJob = await Application.find({ jobID })
+    .select("userID")
+    .lean();
+
+  const promiseArray = [
+    jobInfo.deleteOne(),
+    Bookmark.deleteMany({ jobID }),
+    Application.deleteMany({ jobID }),
+  ];
+
+  if (allApplicationsForThisJob.length > 0) {
+    const allNotifications = allApplicationsForThisJob.map((val) => ({
+      jobTitle: jobInfo.jobTitle,
+      companyID,
+      userID: val.userID,
+    }));
+
+    promiseArray.push(
+      Notification.insertMany(allNotifications, {
+        ordered: false,
+      })
+    );
+  }
+
+  await Promise.all(promiseArray);
 
   res.status(200).json(new ApiResponse(200, null, "Job Posting Deleted"));
 });

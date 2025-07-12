@@ -26,7 +26,7 @@ const experienceYearsOptions = [
   "7 years",
   "8 years",
   "9 years",
-  "10+ years",
+  "10 or more",
 ];
 
 function CreateJobPosting() {

@@ -15,6 +15,7 @@ import { User } from "../models/users.model.js";
 import { Job } from "../models/jobs.model.js";
 import { Application } from "../models/applications.model.js";
 import { Bookmark } from "../models/bookmarks.model.js";
+import { Notification } from "../models/notifications.model.js";
 
 export const registerUser = asyncHandler(async function (req, res) {
   const { fullname, email, password } = req.body;
@@ -337,23 +338,29 @@ export const userProfile = asyncHandler(async function (req, res) {
   if (req.user && !req.user.isVerified)
     throw new ApiError(400, "Unverified User");
 
-  const user = await User.findById(req.user?._id).select(
-    "-refreshToken -password"
-  );
+  const userID = req.user._id;
+  const user = await User.findById(userID)
+    .select("-refreshToken -password")
+    .lean();
 
   if (!user) throw new ApiError(404, "User Not Found");
 
-  const userProfileInfo = user.toObject();
-  userProfileInfo.applicationCount = await Application.countDocuments({
-    userID: userProfileInfo._id,
-  });
-  userProfileInfo.bookmarkCount = await Bookmark.countDocuments({
-    userID: userProfileInfo._id,
-  });
+  const [applicationCount, bookmarkCount, unReadNotificationCount] =
+    await Promise.all([
+      Application.countDocuments({
+        userID: user._id,
+      }),
+      Bookmark.countDocuments({
+        userID: user._id,
+      }),
+      Notification.countDocuments({ userID, isViewed: false }),
+    ]);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, userProfileInfo, "User Profile Info"));
+  user.applicationCount = applicationCount;
+  user.bookmarkCount = bookmarkCount;
+  user.unReadNotificationCount = unReadNotificationCount;
+
+  return res.status(200).json(new ApiResponse(200, user, "User Profile Info"));
 });
 
 export const updateProfileInfo = asyncHandler(async function (req, res) {
@@ -1111,6 +1118,53 @@ export const getAllJobsDetails = asyncHandler(async function (req, res) {
   data.push({ totalCount });
 
   res.status(200).json(new ApiResponse(200, data, ""));
+});
+
+export const getNotifications = asyncHandler(async function (req, res) {
+  const userID = req.user._id;
+
+  if (!mongoose.isValidObjectId(userID)) {
+    throw new ApiError(400, "Not A Valid Mongoose ID", "Invalid Mongoose ID");
+  }
+
+  const unReadNotifications = await Notification.aggregate([
+    {
+      $match: {
+        $and: [{ userID: new mongoose.Types.ObjectId(userID) }],
+      },
+    },
+    {
+      $sort: { createdAt: -1 },
+    },
+    {
+      $lookup: {
+        from: "companies",
+        foreignField: "_id",
+        localField: "companyID",
+        as: "companyInfo",
+      },
+    },
+    {
+      $unwind: { path: "$companyInfo", preserveNullAndEmptyArrays: true },
+    },
+    {
+      $project: {
+        jobTitle: 1,
+        companyName: "$companyInfo.companyName",
+        createdAt: 1,
+        isViewed: 1,
+      },
+    },
+  ]);
+
+  setTimeout(async () => {
+    await Notification.updateMany(
+      { userID, isViewed: false },
+      { $set: { isViewed: true } }
+    );
+  }, 3000);
+
+  return res.status(200).json(new ApiResponse(200, unReadNotifications, ""));
 });
 
 export const searchJobs = asyncHandler(async function (req, res) {

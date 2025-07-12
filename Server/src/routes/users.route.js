@@ -10,6 +10,7 @@ import {
   getAllBookmarks,
   getAllJobsDetails,
   getAppliedJobs,
+  getNotifications,
   homePage,
   loginUser,
   registerUser,
@@ -52,6 +53,7 @@ userRoute.route("/profile/verifyEmail").post(verifyEmail);
 userRoute.route("/profile").get(userProfile).patch(updateProfileInfo);
 userRoute.route("/profile/skills").patch(updateUserSkills);
 userRoute.route("/profile/deleteAccount").delete(deleteUserAccount);
+userRoute.route("/profile/notifications").get(getNotifications);
 
 //Application Related Routes
 userRoute

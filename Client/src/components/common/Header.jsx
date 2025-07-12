@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,6 +13,7 @@ import {
   faChartBar,
   faBars,
   faTimes,
+  faBell, // Added for notifications
 } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 
@@ -55,6 +56,12 @@ function Header() {
     { to: "/jobs", icon: faBriefcase, label: "All Jobs" },
     { to: "/user/applied-jobs", icon: faClipboardList, label: "Applied Jobs" },
     { to: "/user/bookmarked-jobs", icon: faBookmark, label: "Bookmarks" },
+    {
+      to: "/user/profile/notifications", // Link to notifications page
+      icon: faBell,
+      label: "Notifications",
+      badge: user?.unReadNotificationCount, // Use unReadNotificationCount from user object
+    },
     { to: "/user/profile", icon: faUser, label: "My Profile" },
   ];
 
@@ -69,10 +76,15 @@ function Header() {
       <Link
         key={item.to}
         to={item.to}
-        className="hover:text-blue-200 transition-colors flex items-center"
+        className="hover:text-blue-200 transition-colors flex items-center relative" // Added relative for badge positioning
         onClick={onClick}
       >
         <FontAwesomeIcon icon={item.icon} className="mr-1" /> {item.label}
+        {item.badge > 0 && ( // Conditionally render badge for desktop
+          <span className="ml-1 px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full absolute -top-2 -right-3">
+            {item.badge}
+          </span>
+        )}
       </Link>
     ));
 
@@ -81,10 +93,15 @@ function Header() {
       <Link
         key={item.to}
         to={item.to}
-        className="block w-full text-center py-3 px-4 hover:bg-blue-700 rounded-md text-lg font-medium transition-colors duration-200"
+        className="block w-full text-center py-3 px-4 hover:bg-blue-700 rounded-md text-lg font-medium transition-colors duration-200 relative" // Added relative for badge positioning
         onClick={toggleMobileMenu}
       >
         <FontAwesomeIcon icon={item.icon} className="mr-3" /> {item.label}
+        {item.badge > 0 && ( // Conditionally render badge for mobile
+          <span className="ml-2 px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full absolute top-1/2 -translate-y-1/2 right-4">
+            {item.badge}
+          </span>
+        )}
       </Link>
     ));
 

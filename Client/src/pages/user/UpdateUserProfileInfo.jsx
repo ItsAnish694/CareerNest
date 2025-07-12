@@ -6,7 +6,6 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const experiencedYearsOptions = [
   "No Experience",
-  "Less than 1 year",
   "1 year",
   "2 years",
   "3 years",
@@ -16,7 +15,7 @@ const experiencedYearsOptions = [
   "7 years",
   "8 years",
   "9 years",
-  "10+ years",
+  "10 or more",
 ];
 
 function UpdateUserProfileInfo() {

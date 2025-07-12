@@ -14,6 +14,7 @@ import UpdateUserSkills from "./pages/user/UpdateUserSkills";
 import UpdateUserProfileInfo from "./pages/user/UpdateUserProfileInfo";
 import UpdateUserPassword from "./pages/user/UpdateUserPassword";
 import UpdateUserEmail from "./pages/user/UpdateUserEmail";
+import NotificationsPage from "./pages/user/NotificationsPage";
 import VerifyUserEmail from "./pages/user/VerifyUserEmail";
 import RegisterCompany from "./pages/company/RegisterCompany";
 import VerifyCompany from "./pages/company/VerifyCompany";
@@ -85,6 +86,10 @@ function App() {
             />
             <Route path="/user/applied-jobs" element={<AppliedJobs />} />
             <Route path="/user/bookmarked-jobs" element={<BookmarkedJobs />} />
+            <Route
+              path="/user/profile/notifications"
+              element={<NotificationsPage />}
+            />
           </Route>
           <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
             <Route path="/company/profile" element={<CompanyProfile />} />
