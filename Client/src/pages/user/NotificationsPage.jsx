@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -24,8 +24,7 @@ function NotificationsPage() {
       fetchNotifications();
     } else if (!authLoading && (!user || user.role !== "user")) {
       setLoading(false);
-      // Optionally redirect
-      // navigate('/login');
+      // navigate("/login");
     }
   }, [user, authLoading]);
 
@@ -59,7 +58,6 @@ function NotificationsPage() {
 
   return (
     <div className="max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto bg-gradient-to-br from-white to-gray-50 p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl md:shadow-2xl my-6 sm:my-8 md:my-10 border border-gray-100">
-      {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
         className="mb-6 sm:mb-8 px-4 py-2 sm:px-5 sm:py-2 bg-gray-200 text-gray-700 rounded-md sm:rounded-lg hover:bg-gray-300 transition-colors flex items-center font-semibold text-base sm:text-lg shadow-sm"

@@ -799,6 +799,7 @@ export const getJobApplications = asyncHandler(async function (req, res) {
   }
 
   const job = await Job.findOne({ _id: jobID, companyID });
+
   if (!job) {
     throw new ApiError(403, "Unauthorized", "This job doesn't belong to you");
   }
@@ -984,7 +985,7 @@ export const companyDashboard = asyncHandler(async function (req, res) {
 
   const totalJobPosting = jobIDs.length;
 
-  const applicationStats = await Application.aggregate([
+  const applicationStatus = await Application.aggregate([
     {
       $match: {
         jobID: { $in: jobIDs },
@@ -998,7 +999,7 @@ export const companyDashboard = asyncHandler(async function (req, res) {
     },
   ]);
 
-  const allStats = {
+  const allStatus = {
     totalJobPosting,
     totalApplications: 0,
     totalAcceptedApplications: 0,
@@ -1006,16 +1007,16 @@ export const companyDashboard = asyncHandler(async function (req, res) {
     totalPendingApplications: 0,
   };
 
-  for (const stats of applicationStats) {
-    allStats.totalApplications += stats.count;
-    if (stats._id === "Accepted") {
-      allStats.totalAcceptedApplications = stats.count;
-    } else if (stats._id === "Rejected") {
-      allStats.totalRejectedApplications = stats.count;
-    } else if (stats._id === "Pending") {
-      allStats.totalPendingApplications = stats.count;
+  for (const status of applicationStatus) {
+    allStatus.totalApplications += status.count;
+    if (status._id === "Accepted") {
+      allStatus.totalAcceptedApplications = status.count;
+    } else if (status._id === "Rejected") {
+      allStatus.totalRejectedApplications = status.count;
+    } else if (status._id === "Pending") {
+      allStatus.totalPendingApplications = status.count;
     }
   }
 
-  return res.status(200).json(new ApiResponse(200, allStats, ""));
+  return res.status(200).json(new ApiResponse(200, allStatus, ""));
 });

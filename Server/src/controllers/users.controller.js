@@ -17,6 +17,35 @@ import { Application } from "../models/applications.model.js";
 import { Bookmark } from "../models/bookmarks.model.js";
 import { Notification } from "../models/notifications.model.js";
 
+function quickSort(dataArray, start, end) {
+  if (end <= start) {
+    return;
+  }
+
+  const indexOfPivot = sortPivot(dataArray, start, end);
+  quickSort(dataArray, start, indexOfPivot - 1);
+  quickSort(dataArray, indexOfPivot + 1, end);
+}
+
+function sortPivot(dataArray, start, end) {
+  const pivot = dataArray[end].totalMatchedScore;
+  let i = start - 1;
+
+  for (let j = start; j < end; ++j) {
+    if (dataArray[j].totalMatchedScore > pivot) {
+      ++i;
+      let temp = dataArray[i];
+      dataArray[i] = dataArray[j];
+      dataArray[j] = temp;
+    }
+  }
+  ++i;
+  let temp = dataArray[i];
+  dataArray[i] = dataArray[end];
+  dataArray[end] = temp;
+  return i;
+}
+
 export const registerUser = asyncHandler(async function (req, res) {
   const { fullname, email, password } = req.body;
 
@@ -205,12 +234,12 @@ export const verifyUser = asyncHandler(async function (req, res) {
     );
   }
 
-  const normalizedArea = properLocation[0].display_name.split(",")[0];
-  const normalizedCity = properLocation[0].address.city_district;
-  const isInNepal = properLocation[0].address.country;
   const normalizedDistrict = properLocation[0].address.county;
+  const normalizedCity = properLocation[0].address.city_district;
+  const normalizedArea = properLocation[0].display_name.split(",")[0];
+  const isInNepal = properLocation[0].address.country.toLowerCase();
 
-  if (isInNepal !== "Nepal") {
+  if (isInNepal !== "nepal") {
     throw new ApiError(400, "Wrong Area", "Provide Locations Inside Nepal");
   }
 
@@ -233,9 +262,9 @@ export const verifyUser = asyncHandler(async function (req, res) {
   if (!uploadedResume)
     throw new ApiError(500, "Upload Failed", "Error Uploading The Resume File");
 
-  const normalizedSkills = skills.map(
-    (skill) => searchDictionary.skillNormalizationMap[skill.toLowerCase()]
-  );
+  const normalizedSkills = skills
+    .map((skill) => searchDictionary.skillNormalizationMap[skill.toLowerCase()])
+    .filter(Boolean);
 
   user.resumeLink = uploadedResume.secure_url;
   user.skills = normalizedSkills;
@@ -411,9 +440,9 @@ export const updateProfileInfo = asyncHandler(async function (req, res) {
     );
   }
 
-  const isInNepal = properLocation[0].address.country;
+  const isInNepal = properLocation[0].address.country.toLowerCase();
 
-  if (isInNepal !== "Nepal") {
+  if (isInNepal !== "nepal") {
     throw new ApiError(400, "Wrong Area", "Provide Locations Inside Nepal");
   }
 
@@ -718,6 +747,7 @@ export const applyJobApplication = asyncHandler(async function (req, res) {
   if (!user) throw new ApiError(404, "User Not Found");
 
   const alreadyApplied = await Application.findOne({ userID, jobID });
+
   if (alreadyApplied)
     throw new ApiError(
       400,
@@ -734,8 +764,6 @@ export const applyJobApplication = asyncHandler(async function (req, res) {
 
   if (!newApplication)
     throw new ApiError(500, "Error Applying Job", "Please Try Again");
-
-  await Job.updateOne({ _id: job._id }, { $inc: { applicationCount: 1 } });
 
   return res
     .status(200)
@@ -756,8 +784,6 @@ export const deleteJobApplication = asyncHandler(async function (req, res) {
   if (!appliedJob) throw new ApiError(404, "Application Not Found");
 
   await Application.deleteOne({ _id: appliedJob._id });
-
-  await Job.updateOne({ _id: jobID }, { $inc: { applicationCount: -1 } });
 
   return res
     .status(200)
@@ -792,8 +818,6 @@ export const addBookmarkJob = asyncHandler(async function (req, res) {
     throw new ApiError(500, "Error Bookmark", "Can't Bookmark The Job");
   }
 
-  await User.findByIdAndUpdate(userID, { $inc: { bookmarkCount: 1 } });
-
   res.status(200).json(new ApiResponse(200, null, "Saved To Bookmark"));
 });
 
@@ -819,8 +843,6 @@ export const deleteBookmarkJob = asyncHandler(async function (req, res) {
     );
   }
 
-  await User.findByIdAndUpdate(userID, { $inc: { bookmarkCount: -1 } });
-
   res.status(200).json(new ApiResponse(200, null, "Successfully Deleted"));
 });
 
@@ -838,73 +860,72 @@ export const getAllBookmarks = asyncHandler(async function (req, res) {
     );
   }
 
-  const user = await User.findById(userID)
-    .select("-password -refreshToken")
-    .lean();
-
-  const bookMarkedJobs = await Bookmark.aggregate([
-    {
-      $match: { userID: new mongoose.Types.ObjectId(user._id) },
-    },
-    {
-      $sort: { createdAt: -1 },
-    },
-    { $skip: skip },
-    { $limit: limit },
-    {
-      $lookup: {
-        from: "jobs",
-        localField: "jobID",
-        foreignField: "_id",
-        as: "jobInfo",
+  const [user, bookMarkedJobs] = await Promise.all([
+    User.findById(userID).select("-password -refreshToken").lean(),
+    Bookmark.aggregate([
+      {
+        $match: { userID: new mongoose.Types.ObjectId(userID) },
       },
-    },
-    {
-      $unwind: {
-        path: "$jobInfo",
-        preserveNullAndEmptyArrays: true,
+      {
+        $sort: { createdAt: -1 },
       },
-    },
-    {
-      $lookup: {
-        from: "companies",
-        foreignField: "_id",
-        localField: "jobInfo.companyID",
-        as: "companyInfo",
-      },
-    },
-    {
-      $unwind: {
-        path: "$companyInfo",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $project: {
-        _id: "$jobInfo._id",
-        jobTitle: "$jobInfo.jobTitle",
-        jobDescription: "$jobInfo.jobDescription",
-        jobType: "$jobInfo.jobType",
-        experienceLevel: "$jobInfo.experienceLevel",
-        salary: "$jobInfo.salary",
-        vacancies: "$jobInfo.vacancies",
-        applicationDeadline: "$jobInfo.applicationDeadline",
-        applicationCount: "$jobInfo.applicationCount",
-        createdAt: "$jobInfo.createdAt",
-        requiredSkills: "$jobInfo.requiredSkills",
-        requiredExperience: "$jobInfo.requiredExperience",
-        companyInfo: {
-          companyName: "$companyInfo.companyName",
-          companyLocation: {
-            district: "$companyInfo.companyDistrict",
-            city: "$companyInfo.companyCity",
-            area: "$companyInfo.companyArea",
-          },
-          companyBio: "$companyInfo.companyBio",
-          companyLogo: "$companyInfo.companyLogo",
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "jobs",
+          localField: "jobID",
+          foreignField: "_id",
+          as: "jobInfo",
         },
       },
-    },
+      {
+        $unwind: {
+          path: "$jobInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "companies",
+          foreignField: "_id",
+          localField: "jobInfo.companyID",
+          as: "companyInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$companyInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: "$jobInfo._id",
+          jobTitle: "$jobInfo.jobTitle",
+          jobDescription: "$jobInfo.jobDescription",
+          jobType: "$jobInfo.jobType",
+          experienceLevel: "$jobInfo.experienceLevel",
+          salary: "$jobInfo.salary",
+          vacancies: "$jobInfo.vacancies",
+          applicationDeadline: "$jobInfo.applicationDeadline",
+          applicationCount: "$jobInfo.applicationCount",
+          createdAt: "$jobInfo.createdAt",
+          requiredSkills: "$jobInfo.requiredSkills",
+          requiredExperience: "$jobInfo.requiredExperience",
+          companyInfo: {
+            companyName: "$companyInfo.companyName",
+            companyLocation: {
+              district: "$companyInfo.companyDistrict",
+              city: "$companyInfo.companyCity",
+              area: "$companyInfo.companyArea",
+            },
+            companyBio: "$companyInfo.companyBio",
+            companyLogo: "$companyInfo.companyLogo",
+          },
+        },
+      },
+    ]),
   ]);
 
   const jobsWithScore = calculateJobMatchScores(bookMarkedJobs, user);
@@ -927,68 +948,67 @@ export const getAppliedJobs = asyncHandler(async function (req, res) {
     );
   }
 
-  const user = await User.findById(userID)
-    .select("-password -refreshToken")
-    .lean();
-
-  const appliedJobs = await Application.aggregate([
-    {
-      $match: { userID: new mongoose.Types.ObjectId(user._id) },
-    },
-    { $skip: skip },
-    {
-      $sort: { createdAt: -1 },
-    },
-    { $limit: limit },
-    {
-      $lookup: {
-        from: "jobs",
-        localField: "jobID",
-        foreignField: "_id",
-        as: "jobInfo",
+  const [user, appliedJobs] = await Promise.all([
+    User.findById(userID).select("-password -refreshToken").lean(),
+    Application.aggregate([
+      {
+        $match: { userID: new mongoose.Types.ObjectId(userID) },
       },
-    },
-    {
-      $unwind: { path: "$jobInfo", preserveNullAndEmptyArrays: true },
-    },
-    {
-      $lookup: {
-        from: "companies",
-        foreignField: "_id",
-        localField: "jobInfo.companyID",
-        as: "companyInfo",
+      { $skip: skip },
+      {
+        $sort: { createdAt: -1 },
       },
-    },
-    {
-      $unwind: { path: "$companyInfo", preserveNullAndEmptyArrays: true },
-    },
-    {
-      $project: {
-        status: 1,
-        _id: "$jobInfo._id",
-        jobTitle: "$jobInfo.jobTitle",
-        jobDescription: "$jobInfo.jobDescription",
-        jobType: "$jobInfo.jobType",
-        experienceLevel: "$jobInfo.experienceLevel",
-        salary: "$jobInfo.salary",
-        vacancies: "$jobInfo.vacancies",
-        applicationDeadline: "$jobInfo.applicationDeadline",
-        applicationCount: "$jobInfo.applicationCount",
-        createdAt: "$jobInfo.createdAt",
-        requiredSkills: "$jobInfo.requiredSkills",
-        requiredExperience: "$jobInfo.requiredExperience",
-        companyInfo: {
-          companyName: "$companyInfo.companyName",
-          companyLocation: {
-            district: "$companyInfo.companyDistrict",
-            city: "$companyInfo.companyCity",
-            area: "$companyInfo.companyArea",
-          },
-          companyLogo: "$companyInfo.companyLogo",
-          companyBio: "$companyInfo.companyBio",
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "jobs",
+          localField: "jobID",
+          foreignField: "_id",
+          as: "jobInfo",
         },
       },
-    },
+      {
+        $unwind: { path: "$jobInfo", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $lookup: {
+          from: "companies",
+          foreignField: "_id",
+          localField: "jobInfo.companyID",
+          as: "companyInfo",
+        },
+      },
+      {
+        $unwind: { path: "$companyInfo", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $project: {
+          status: 1,
+          _id: "$jobInfo._id",
+          jobTitle: "$jobInfo.jobTitle",
+          jobDescription: "$jobInfo.jobDescription",
+          jobType: "$jobInfo.jobType",
+          experienceLevel: "$jobInfo.experienceLevel",
+          salary: "$jobInfo.salary",
+          vacancies: "$jobInfo.vacancies",
+          applicationDeadline: "$jobInfo.applicationDeadline",
+          applicationCount: "$jobInfo.applicationCount",
+          createdAt: "$jobInfo.createdAt",
+          requiredSkills: "$jobInfo.requiredSkills",
+          requiredExperience: "$jobInfo.requiredExperience",
+          companyInfo: {
+            companyName: "$companyInfo.companyName",
+            companyLocation: {
+              district: "$companyInfo.companyDistrict",
+              city: "$companyInfo.companyCity",
+              area: "$companyInfo.companyArea",
+            },
+            companyLogo: "$companyInfo.companyLogo",
+            companyBio: "$companyInfo.companyBio",
+          },
+        },
+      },
+    ]),
   ]);
 
   const jobsWithScore = calculateJobMatchScores(appliedJobs, user);
@@ -1027,6 +1047,7 @@ export const getAllJobsDetails = asyncHandler(async function (req, res) {
     top: { applicationCount: -1 },
     latest: { createdAt: -1 },
   };
+
   const aggregationLimit = type === "recommended" ? 100 : Number(limit);
 
   const matchObject = {
@@ -1037,55 +1058,69 @@ export const getAllJobsDetails = asyncHandler(async function (req, res) {
     matchObject._id = new mongoose.Types.ObjectId(jobID);
   }
 
-  const totalCount = await Job.countDocuments(matchObject);
-
-  const getAllJobs = await Job.aggregate([
-    {
-      $match: matchObject,
-    },
-    { $sort: sort[type] || { createdAt: -1 } },
-    { $skip: skip },
-    { $limit: aggregationLimit },
-    {
-      $lookup: {
-        from: "companies",
-        localField: "companyID",
-        foreignField: "_id",
-        as: "companyInfo",
+  const [totalCount, getAllJobs] = await Promise.all([
+    Job.countDocuments(matchObject),
+    Job.aggregate([
+      {
+        $match: matchObject,
       },
-    },
-    {
-      $unwind: {
-        path: "$companyInfo",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        jobTitle: 1,
-        jobDescription: 1,
-        requiredSkills: 1,
-        jobType: 1,
-        requiredExperience: 1,
-        experienceLevel: 1,
-        salary: 1,
-        vacancies: 1,
-        applicationDeadline: 1,
-        applicationCount: 1,
-        createdAt: 1,
-        companyInfo: {
-          companyName: "$companyInfo.companyName",
-          companyLocation: {
-            district: "$companyInfo.companyDistrict",
-            city: "$companyInfo.companyCity",
-            area: "$companyInfo.companyArea",
-          },
-          companyLogo: "$companyInfo.companyLogo",
-          companyBio: "$companyInfo.companyBio",
+      {
+        $lookup: {
+          from: "applications",
+          foreignField: "jobID",
+          localField: "_id",
+          as: "allApplications",
         },
       },
-    },
+      {
+        $addFields: {
+          applicationCount: { $size: "$allApplications" },
+        },
+      },
+      { $sort: sort[type] || { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: aggregationLimit },
+      {
+        $lookup: {
+          from: "companies",
+          localField: "companyID",
+          foreignField: "_id",
+          as: "companyInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$companyInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          jobTitle: 1,
+          jobDescription: 1,
+          requiredSkills: 1,
+          jobType: 1,
+          requiredExperience: 1,
+          experienceLevel: 1,
+          salary: 1,
+          vacancies: 1,
+          applicationDeadline: 1,
+          applicationCount: 1,
+          createdAt: 1,
+          companyInfo: {
+            companyName: "$companyInfo.companyName",
+            companyLocation: {
+              district: "$companyInfo.companyDistrict",
+              city: "$companyInfo.companyCity",
+              area: "$companyInfo.companyArea",
+            },
+            companyLogo: "$companyInfo.companyLogo",
+            companyBio: "$companyInfo.companyBio",
+          },
+        },
+      },
+    ]),
   ]);
 
   if (jobID) {
@@ -1105,16 +1140,12 @@ export const getAllJobsDetails = asyncHandler(async function (req, res) {
   let data = [];
 
   if (type === "recommended") {
-    data = datawithMatchedScore
-      .sort((a, b) => {
-        const maxSort = b.totalMatchedScore * 0.7 + b.applicationCount * 0.3;
-        const minSort = a.totalMatchedScore * 0.7 + a.applicationCount * 0.3;
-        return maxSort - minSort;
-      })
-      .slice(0, Number(limit));
+    quickSort(datawithMatchedScore, 0, datawithMatchedScore.length - 1);
+    data = datawithMatchedScore.slice(0, Number(limit));
   } else {
     data = datawithMatchedScore;
   }
+
   data.push({ totalCount });
 
   res.status(200).json(new ApiResponse(200, data, ""));
@@ -1214,85 +1245,83 @@ export const searchJobs = asyncHandler(async function (req, res) {
     );
   }
 
-  const userInfo = await User.findById(userID)
-    .select("-refreshToken -password")
-    .lean();
-
   const searchString = Array.from(
     new Set(allKeyWords.join(" ").split(" "))
   ).join(" ");
 
-  const totalCount = await Job.countDocuments({
-    $and: [
-      { $text: { $search: searchString } },
-      { applicationDeadline: { $gte: new Date() } },
-    ],
-  });
-
-  const searchedJobs = await Job.aggregate([
-    {
-      $match: {
-        $and: [
-          { $text: { $search: searchString } },
-          { applicationDeadline: { $gte: new Date() } },
-        ],
-      },
-    },
-    {
-      $addFields: {
-        score: { $meta: "textScore" },
-      },
-    },
-    {
-      $sort: { score: -1, createdAt: -1 },
-    },
-    { $skip: skip },
-    {
-      $limit: aggregationLimit,
-    },
-    {
-      $lookup: {
-        from: "companies",
-        foreignField: "_id",
-        localField: "companyID",
-        as: "companyInfo",
-      },
-    },
-    {
-      $unwind: {
-        path: "$companyInfo",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        jobTitle: 1,
-        jobDescription: 1,
-        requiredSkills: 1,
-        jobType: 1,
-        requiredExperience: 1,
-        experienceLevel: 1,
-        salary: 1,
-        vacancies: 1,
-        applicationDeadline: 1,
-        applicationCount: 1,
-        createdAt: 1,
-        companyInfo: {
-          companyName: "$companyInfo.companyName",
-          companyLocation: {
-            district: "$companyInfo.companyDistrict",
-            city: "$companyInfo.companyCity",
-            area: "$companyInfo.companyArea",
-          },
-          companyLogo: "$companyInfo.companyLogo",
-          companyBio: "$companyInfo.companyBio",
+  const [userInfo, totalCount, searchedJobs] = await Promise.all([
+    User.findById(userID).select("-refreshToken -password").lean(),
+    Job.countDocuments({
+      $and: [
+        { $text: { $search: searchString } },
+        { applicationDeadline: { $gte: new Date() } },
+      ],
+    }),
+    Job.aggregate([
+      {
+        $match: {
+          $and: [
+            { $text: { $search: searchString } },
+            { applicationDeadline: { $gte: new Date() } },
+          ],
         },
       },
-    },
+      {
+        $addFields: {
+          score: { $meta: "textScore" },
+        },
+      },
+      {
+        $sort: { score: -1, createdAt: -1 },
+      },
+      { $skip: skip },
+      {
+        $limit: aggregationLimit,
+      },
+      {
+        $lookup: {
+          from: "companies",
+          foreignField: "_id",
+          localField: "companyID",
+          as: "companyInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$companyInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          jobTitle: 1,
+          jobDescription: 1,
+          requiredSkills: 1,
+          jobType: 1,
+          requiredExperience: 1,
+          experienceLevel: 1,
+          salary: 1,
+          vacancies: 1,
+          applicationDeadline: 1,
+          applicationCount: 1,
+          createdAt: 1,
+          companyInfo: {
+            companyName: "$companyInfo.companyName",
+            companyLocation: {
+              district: "$companyInfo.companyDistrict",
+              city: "$companyInfo.companyCity",
+              area: "$companyInfo.companyArea",
+            },
+            companyLogo: "$companyInfo.companyLogo",
+            companyBio: "$companyInfo.companyBio",
+          },
+        },
+      },
+    ]),
   ]);
 
-  if (!(searchedJobs.length > 0)) {
+  if (searchedJobs.length === 0) {
     throw new ApiError(
       404,
       "No Jobs Found",
@@ -1302,13 +1331,9 @@ export const searchJobs = asyncHandler(async function (req, res) {
 
   const jobsWithMatchedScore = calculateJobMatchScores(searchedJobs, userInfo);
 
-  const data = jobsWithMatchedScore
-    .sort((a, b) => {
-      const maxSort = b.totalMatchedScore * 0.7 + b.applicationCount * 0.3;
-      const minSort = a.totalMatchedScore * 0.7 + a.applicationCount * 0.3;
-      return maxSort - minSort;
-    })
-    .slice(0, Number(limit));
+  quickSort(jobsWithMatchedScore, 0, jobsWithMatchedScore.length - 1);
+
+  const data = jobsWithMatchedScore.slice(0, Number(limit));
 
   data.push({ totalCount });
 

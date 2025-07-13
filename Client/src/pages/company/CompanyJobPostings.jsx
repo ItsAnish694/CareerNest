@@ -6,7 +6,6 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NoDataMessage from "../../components/common/NoDataMessage";
 import Pagination from "../../components/common/Pagination";
 import Modal from "../../components/common/Modal";
-import ButtonLoadingSpinner from "../../components/common/LoadingSpinner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faUsers, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { format } from "date-fns";
@@ -210,15 +209,7 @@ function CompanyJobPostings() {
         title="Delete Job Posting"
         onConfirm={deleteJob}
         confirmText={
-          isDeleting ? (
-            <ButtonLoadingSpinner
-              text="Deleting..."
-              spinnerColor="text-white"
-              textColor="text-white"
-            />
-          ) : (
-            "Yes, Delete"
-          )
+          isDeleting ? <LoadingSpinner variant="inline" /> : "Yes, Delete"
         }
         confirmButtonClass="bg-red-600 hover:bg-red-700"
         isConfirmDisabled={isDeleting}

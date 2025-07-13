@@ -14,7 +14,6 @@ export function calculateJobMatchScores(jobs = [], user) {
     let requiredExp = Number(job.requiredExperience?.split(" ")[0]) || 0;
     let userExp = Number(user.experiencedYears?.split(" ")[0]) || 0;
 
-    // Prevent divide-by-zero
     if (requiredExp === 0 && userExp === 0) {
       requiredExp = 1;
       userExp = 1;
