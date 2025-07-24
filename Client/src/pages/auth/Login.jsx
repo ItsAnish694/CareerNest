@@ -100,6 +100,7 @@ function Login() {
           Register as Company
         </Link>
       </p>
+      <p>reverentpasteur6@deliveryotter.com</p>
     </div>
   );
 }

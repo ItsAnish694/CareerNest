@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 const adminSchema = new Schema(
   {
-    adminEmail: {
+    adminUsername: {
       type: String,
       trim: true,
       unique: true,
@@ -22,9 +22,6 @@ const adminSchema = new Schema(
       enum: ["admin"],
       required: true,
       default: "admin",
-    },
-    refreshToken: {
-      type: String,
     },
   },
   { timestamps: true }
