@@ -3,6 +3,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { toast } from "react-toastify"; // Import toast
 
 const experiencedYearsOptions = [
   "No Experience",
@@ -28,9 +29,7 @@ function UpdateUserProfileInfo() {
   const [fullname, setFullname] = useState("");
   const [experiencedYears, setExperiencedYears] = useState("No Experience");
   const [bio, setBio] = useState("");
-  const [district, setDistrict] = useState("");
-  const [city, setCity] = useState("");
-  const [area, setArea] = useState("");
+  const [location, setLocation] = useState(""); // Single state for combined location
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,15 +37,23 @@ function UpdateUserProfileInfo() {
       setFullname(user.fullname || "");
       setExperiencedYears(user.experiencedYears || "No Experience");
       setBio(user.bio || "");
-      setDistrict(user.district || "");
-      setCity(user.city || "");
-      setArea(user.area || "");
+      // Combine existing location fields into a single string for the form
+      const userLocation = [user.area, user.city, user.district]
+        .filter(Boolean) // Remove null/undefined/empty strings
+        .join(", ");
+      setLocation(userLocation);
     }
   }, [user, authLoading]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    // Parse the single location string into area, city, and district
+    const locationParts = location.split(",").map((part) => part.trim());
+    const area = locationParts[0] || "";
+    const city = locationParts[1] || "";
+    const district = locationParts[2] || "";
 
     const updateData = {
       fullname,
@@ -60,11 +67,15 @@ function UpdateUserProfileInfo() {
     try {
       const response = await api.patch("/user/profile", updateData);
       if (response.data.Success) {
-        await checkAuthStatus();
-        navigate("/user/profile");
+        toast.success("Profile updated successfully!"); // Success toast
+        await checkAuthStatus(); // Re-fetch auth status to update context with new data
+        navigate("/user/profile"); // Navigate back to profile page
       }
     } catch (error) {
-      console.log(error.message);
+      toast.error(
+        error.response?.data?.Error?.Message ||
+          "Failed to update profile. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -145,50 +156,19 @@ function UpdateUserProfileInfo() {
         </div>
         <div>
           <label
-            htmlFor="district"
+            htmlFor="location" // Updated ID to 'location'
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            District
+            Location
           </label>
           <input
             type="text"
-            id="district"
+            id="location" // Updated ID to 'location'
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={district}
-            onChange={(e) => setDistrict(e.target.value)}
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
             disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="city"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            City
-          </label>
-          <input
-            type="text"
-            id="city"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="area"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Area
-          </label>
-          <input
-            type="text"
-            id="area"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-            disabled={loading}
+            placeholder="Enter as: Area, City, District (e.g., Ramailo Chowk, Bharatpur, Chitwan)"
           />
         </div>
         <button
@@ -199,6 +179,64 @@ function UpdateUserProfileInfo() {
           {loading ? <LoadingSpinner variant="inline" /> : "Update Profile"}
         </button>
       </form>
+    </div>
+  );
+}
+
+// Re-defining InputField and TextAreaField as they were not part of the original component
+// These are assumed to be common components you have.
+// If they are in separate files, ensure they are imported correctly.
+function InputField({
+  id,
+  label,
+  type,
+  value,
+  onChange,
+  required,
+  disabled,
+  helperText,
+  placeholder,
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        disabled={disabled}
+        placeholder={placeholder}
+        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {helperText && <p className="text-xs text-gray-500 mt-1">{helperText}</p>}
+    </div>
+  );
+}
+
+function TextAreaField({ id, label, value, onChange, disabled, placeholder }) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        {label}
+      </label>
+      <textarea
+        id={id}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        placeholder={placeholder}
+        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+      />
     </div>
   );
 }

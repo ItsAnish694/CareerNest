@@ -1,9 +1,17 @@
-import { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NoDataMessage from "../../components/common/NoDataMessage";
 import { AuthContext } from "../../contexts/AuthContext";
 import { Link } from "react-router-dom";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+} from "recharts"; // Import Recharts components
 
 function CompanyDashboard() {
   const { company, loading: authLoading } = useContext(AuthContext);
@@ -93,17 +101,28 @@ function CompanyDashboard() {
     },
   ];
 
+  // Prepare data for the pie chart
+  const pieChartData = [
+    { name: "Accepted", value: dashboardData.totalAcceptedApplications },
+    { name: "Rejected", value: dashboardData.totalRejectedApplications },
+    { name: "Pending", value: dashboardData.totalPendingApplications },
+  ];
+
+  // Define colors for the pie chart slices
+  const COLORS = ["#8884d8", "#ff4d4f", "#ffc658"]; // Purple, Red, Yellow (matching tailwind colors roughly)
+
   return (
-    <div className="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow my-10">
-      <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
+    <div className="max-w-full sm:max-w-5xl mx-auto bg-white p-6 rounded-xl shadow-lg my-10 border border-gray-100">
+      <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-8 border-b-2 pb-3 border-blue-200">
         Company Dashboard
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
         {stats.map((item) => (
           <div
             key={item.label}
-            className={`bg-${item.color}-50 p-5 rounded shadow text-center`}
+            className={`bg-${item.color}-50 p-5 rounded-lg shadow text-center border border-${item.color}-100`}
           >
             <h3 className={`text-lg font-semibold text-${item.color}-800`}>
               {item.label}
@@ -113,6 +132,44 @@ function CompanyDashboard() {
             </p>
           </div>
         ))}
+      </div>
+
+      {/* Pie Chart for Application Statuses */}
+      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center border-b-2 pb-3 border-blue-200">
+          Application Status Distribution
+        </h3>
+        {/* Check if there's data to display in the pie chart */}
+        {dashboardData.totalApplications > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={pieChartData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+                nameKey="name"
+                label={({ name, percent }) =>
+                  `${name} ${(percent * 100).toFixed(0)}%`
+                }
+              >
+                {pieChartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : (
+          <NoDataMessage message="No application data to display in the chart." />
+        )}
       </div>
     </div>
   );

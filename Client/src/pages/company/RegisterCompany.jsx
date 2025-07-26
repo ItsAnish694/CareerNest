@@ -10,6 +10,7 @@ function RegisterCompany() {
     companyEmail: "",
     companyPassword: "",
     companyLogo: null,
+    companyLocation: "", // Single string for user input
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -47,6 +48,19 @@ function RegisterCompany() {
     formData.append("companyName", form.companyName);
     formData.append("companyEmail", form.companyEmail);
     formData.append("companyPassword", form.companyPassword);
+
+    // Parse the single companyLocation string into area, city, and district
+    const locationParts = form.companyLocation
+      .split(",")
+      .map((part) => part.trim());
+    const companyArea = locationParts[0] || "";
+    const companyCity = locationParts[1] || "";
+    const companyDistrict = locationParts[2] || "";
+
+    formData.append("companyArea", companyArea);
+    formData.append("companyCity", companyCity);
+    formData.append("companyDistrict", companyDistrict);
+
     if (form.companyLogo) {
       formData.append("companyLogo", form.companyLogo);
     }
@@ -56,10 +70,17 @@ function RegisterCompany() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       if (response.data.Success) {
+        toast.success(
+          "Company registered successfully! Please check your email for verification."
+        );
         navigate("/login");
       }
-    } catch {
-      // Error handled globally by interceptor
+    } catch (error) {
+      // Error handled globally by interceptor, but a specific toast for registration might be useful
+      toast.error(
+        error.response?.data?.Error?.Message ||
+          "Registration failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -98,6 +119,16 @@ function RegisterCompany() {
           required
           disabled={loading}
           helperText="Strong password: 8 characters, numbers, uppercase, lowercase."
+        />
+        <InputField
+          id="companyLocation"
+          label="Company Location"
+          type="text"
+          value={form.companyLocation}
+          onChange={handleChange}
+          required
+          disabled={loading}
+          helperText="Enter as: Area, City, District (e.g., Ramailo Chowk, Bharatpur, Chitwan)"
         />
         <div>
           <label

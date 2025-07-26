@@ -8,6 +8,7 @@ function RegisterUser() {
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [location, setLocation] = useState(""); // New state for combined location
   const [profilePic, setProfilePic] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -41,6 +42,17 @@ function RegisterUser() {
     formData.append("fullname", fullname);
     formData.append("email", email);
     formData.append("password", password);
+
+    // Parse the single location string into area, city, and district
+    const locationParts = location.split(",").map((part) => part.trim());
+    const area = locationParts[0] || "";
+    const city = locationParts[1] || "";
+    const district = locationParts[2] || "";
+
+    formData.append("area", area);
+    formData.append("city", city);
+    formData.append("district", district);
+
     if (profilePic) {
       formData.append("profilePic", profilePic);
     }
@@ -52,10 +64,16 @@ function RegisterUser() {
         },
       });
       if (response.data.Success) {
+        toast.success(
+          "Registration successful! Please check your email for verification."
+        );
         navigate("/login");
       }
     } catch (error) {
-      console.log(error.message);
+      toast.error(
+        error.response?.data?.Error?.Message ||
+          "Registration failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -120,6 +138,24 @@ function RegisterUser() {
         </div>
         <div>
           <label
+            htmlFor="location"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Location
+          </label>
+          <input
+            type="text"
+            id="location"
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            required
+            disabled={loading}
+            placeholder="Enter as: Area, City, District (e.g., Ramailo Chowk, Bharatpur, Chitwan)"
+          />
+        </div>
+        <div>
+          <label
             htmlFor="profilePic"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
@@ -129,7 +165,7 @@ function RegisterUser() {
             type="file"
             id="profilePic"
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/jpg" // Added specific image types
             onChange={handleFileChange}
             disabled={loading}
           />
@@ -148,6 +184,64 @@ function RegisterUser() {
           Login
         </Link>
       </p>
+    </div>
+  );
+}
+
+// Re-defining InputField and TextAreaField as they were not part of the original RegisterUser component
+// These are assumed to be common components you have.
+// If they are in separate files, ensure they are imported correctly.
+function InputField({
+  id,
+  label,
+  type,
+  value,
+  onChange,
+  required,
+  disabled,
+  helperText,
+  placeholder,
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        disabled={disabled}
+        placeholder={placeholder}
+        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {helperText && <p className="text-xs text-gray-500 mt-1">{helperText}</p>}
+    </div>
+  );
+}
+
+function TextAreaField({ id, label, value, onChange, disabled, placeholder }) {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        {label}
+      </label>
+      <textarea
+        id={id}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        placeholder={placeholder}
+        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+      />
     </div>
   );
 }

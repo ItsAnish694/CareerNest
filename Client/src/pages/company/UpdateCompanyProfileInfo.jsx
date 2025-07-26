@@ -3,6 +3,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { toast } from "react-toastify"; // Import toast
 
 function UpdateCompanyProfileInfo() {
   const {
@@ -14,20 +15,25 @@ function UpdateCompanyProfileInfo() {
   const [form, setForm] = useState({
     companyName: "",
     companyBio: "",
-    companyDistrict: "",
-    companyCity: "",
-    companyArea: "",
+    companyLocation: "", // Single string for location
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && company) {
+      // Combine existing location fields into a single string for the form
+      const location = [
+        company.companyArea,
+        company.companyCity,
+        company.companyDistrict,
+      ]
+        .filter(Boolean) // Remove null/undefined/empty strings
+        .join(", ");
+
       setForm({
         companyName: company.companyName || "",
         companyBio: company.companyBio || "",
-        companyDistrict: company.companyDistrict || "",
-        companyCity: company.companyCity || "",
-        companyArea: company.companyArea || "",
+        companyLocation: location, // Set the combined location
       });
     }
   }, [company, authLoading]);
@@ -41,14 +47,35 @@ function UpdateCompanyProfileInfo() {
     e.preventDefault();
     setLoading(true);
 
+    // Parse the single companyLocation string into area, city, and district
+    const locationParts = form.companyLocation
+      .split(",")
+      .map((part) => part.trim());
+    const companyArea = locationParts[0] || "";
+    const companyCity = locationParts[1] || "";
+    const companyDistrict = locationParts[2] || "";
+
+    const updatePayload = {
+      companyName: form.companyName,
+      companyBio: form.companyBio,
+      companyArea: companyArea,
+      companyCity: companyCity,
+      companyDistrict: companyDistrict,
+    };
+
     try {
-      const response = await api.patch("/company/profile", form);
+      const response = await api.patch("/company/profile", updatePayload);
       if (response.data.Success) {
-        await checkAuthStatus();
-        navigate("/company/profile");
+        toast.success("Company profile updated successfully!"); // Success toast
+        await checkAuthStatus(); // Re-fetch auth status to update context with new data
+        navigate("/company/profile"); // Navigate back to profile page
       }
     } catch (error) {
-      console.log(error.message);
+      // Error handled globally by interceptor, but a specific toast for this might be useful
+      toast.error(
+        error.response?.data?.Error?.Message ||
+          "Failed to update profile. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -89,25 +116,12 @@ function UpdateCompanyProfileInfo() {
           placeholder="Tell us about your company..."
         />
         <InputField
-          id="companyDistrict"
-          label="Company District"
-          value={form.companyDistrict}
+          id="companyLocation" // Single location input field
+          label="Company Location"
+          value={form.companyLocation}
           onChange={handleChange}
           disabled={loading}
-        />
-        <InputField
-          id="companyCity"
-          label="Company City"
-          value={form.companyCity}
-          onChange={handleChange}
-          disabled={loading}
-        />
-        <InputField
-          id="companyArea"
-          label="Company Area"
-          value={form.companyArea}
-          onChange={handleChange}
-          disabled={loading}
+          helperText="Enter as: Area, City, District (e.g., Ramailo Chowk, Bharatpur, Chitwan)"
         />
         <button
           type="submit"
@@ -125,7 +139,15 @@ function UpdateCompanyProfileInfo() {
   );
 }
 
-function InputField({ id, label, value, onChange, disabled, required }) {
+function InputField({
+  id,
+  label,
+  value,
+  onChange,
+  disabled,
+  required,
+  helperText,
+}) {
   return (
     <div>
       <label
@@ -143,6 +165,7 @@ function InputField({ id, label, value, onChange, disabled, required }) {
         disabled={disabled}
         className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+      {helperText && <p className="text-xs text-gray-500 mt-1">{helperText}</p>}
     </div>
   );
 }
