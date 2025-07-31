@@ -295,7 +295,6 @@ export const loginCompany = asyncHandler(async function (req, res) {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "none",
   };
 
   return res

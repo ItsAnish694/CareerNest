@@ -69,8 +69,8 @@ const companySchema = new Schema(
     },
     isVerified: {
       type: String,
-      enum: ["Not Verified", "Pending", "Verified"],
-      default: "Not Verified",
+      enum: ["unverified", "rejected", "pending", "verified"],
+      default: "unverified",
     },
   },
   { timestamps: true }
