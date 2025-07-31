@@ -17,13 +17,16 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const COLORS = ["#8884d8", "#ffc658", "#82ca9d"]; // Purple, Yellow, Green
+// Colors for the Pie Chart.
+const PIE_CHART_COLORS = ["#8884d8", "#ffc658", "#82ca9d"];
 
+// Main component for the Admin Dashboard.
 function AdminDashboard() {
   const { admin, loading: authLoading } = useContext(AuthContext);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch dashboard data when the component mounts or auth state changes.
   useEffect(() => {
     if (!authLoading) {
       if (admin?.role === "admin") {
@@ -35,6 +38,7 @@ function AdminDashboard() {
     }
   }, [authLoading, admin]);
 
+  // Asynchronously fetches all the dashboard data from the backend API.
   async function fetchDashboardData() {
     setLoading(true);
     try {
@@ -47,18 +51,23 @@ function AdminDashboard() {
     }
   }
 
+  // Display a loading spinner while fetching data or authenticating.
   if (authLoading || loading) return <LoadingSpinner />;
 
+  // Display access denied message if the user is not an admin.
   if (!admin || admin.role !== "admin") {
     return (
       <NoDataMessage message="Access Denied: You must be logged in as an administrator to view this page." />
     );
   }
 
+  // Display a message if no dashboard data is available.
   if (!dashboardData) {
     return <NoDataMessage message="No dashboard data available." />;
   }
 
+  // An array of stats to be rendered as cards on the dashboard.
+  // This now includes the new monthly user and company stats.
   const stats = [
     { label: "Total Users", value: dashboardData.totalUsers, color: "blue" },
     {
@@ -86,21 +95,48 @@ function AdminDashboard() {
       value: dashboardData.totalApplications,
       color: "indigo",
     },
-  ];
-
-  const monthlyData = [
+    // New stats from the updated backend controller
     {
-      name: "This Month",
-      Jobs: dashboardData.jobsThisMonth,
-      Applications: dashboardData.applicationsThisMonth,
+      label: "New Users This Month",
+      value: dashboardData.newUserThisMonth,
+      color: "teal",
+    },
+    {
+      label: "New Companies This Month",
+      value: dashboardData.newCompanyThisMonth,
+      color: "orange",
+    },
+    {
+      label: "New Jobs This Month",
+      value: dashboardData.jobsThisMonth,
+      color: "pink",
+    },
+    {
+      label: "New Applications This Month",
+      value: dashboardData.applicationsThisMonth,
+      color: "cyan",
     },
   ];
 
+  // Data for the monthly activity bar chart.
+  // Updated to include new users and new companies this month.
+  const monthlyData = [
+    {
+      name: "This Month",
+      "New Jobs": dashboardData.jobsThisMonth,
+      "New Applications": dashboardData.applicationsThisMonth,
+      "New Users": dashboardData.newUserThisMonth,
+      "New Companies": dashboardData.newCompanyThisMonth,
+    },
+  ];
+
+  // Calculate the number of unverified/rejected companies.
   const otherCompanies =
     dashboardData.totalCompanies -
     dashboardData.verifiedCompanies -
     dashboardData.pendingCompanies;
 
+  // Data for the company verification status pie chart.
   const companyStatusData = [
     { name: "Verified", value: dashboardData.verifiedCompanies },
     { name: "Pending", value: dashboardData.pendingCompanies },
@@ -113,6 +149,13 @@ function AdminDashboard() {
     });
   }
 
+  // Check if there is any monthly activity to display in the chart.
+  const hasMonthlyActivity =
+    dashboardData.jobsThisMonth > 0 ||
+    dashboardData.applicationsThisMonth > 0 ||
+    dashboardData.newUserThisMonth > 0 ||
+    dashboardData.newCompanyThisMonth > 0;
+
   return (
     <div className="max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white p-4 sm:p-6 rounded-xl shadow-lg my-6 sm:my-10 border border-gray-100">
       <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 mb-6 sm:mb-8 pb-3 border-b-2 border-blue-200">
@@ -120,7 +163,7 @@ function AdminDashboard() {
       </h2>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10">
         {stats.map(({ label, value, color }) => (
           <div
             key={label}
@@ -147,8 +190,7 @@ function AdminDashboard() {
             Monthly Activity
           </h3>
 
-          {dashboardData.jobsThisMonth > 0 ||
-          dashboardData.applicationsThisMonth > 0 ? (
+          {hasMonthlyActivity ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={monthlyData}
@@ -159,12 +201,14 @@ function AdminDashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="Jobs" fill="#3b82f6" /> {/* Blue */}
-                <Bar dataKey="Applications" fill="#22c55e" /> {/* Green */}
+                <Bar dataKey="New Jobs" fill="#3b82f6" /> {/* Blue */}
+                <Bar dataKey="New Applications" fill="#22c55e" /> {/* Green */}
+                <Bar dataKey="New Users" fill="#f97316" /> {/* Orange */}
+                <Bar dataKey="New Companies" fill="#14b8a6" /> {/* Teal */}
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <NoDataMessage message="No job or application activity this month." />
+            <NoDataMessage message="No job, application, user, or company activity this month." />
           )}
         </section>
 
@@ -192,7 +236,7 @@ function AdminDashboard() {
                   {companyStatusData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
+                      fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]}
                     />
                   ))}
                 </Pie>

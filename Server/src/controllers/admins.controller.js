@@ -515,6 +515,8 @@ export const adminDashboard = asyncHandler(async (req, res) => {
     totalApplications,
     applicationsThisMonth,
     jobsThisMonth,
+    newUserThisMonth,
+    newCompanyThisMonth,
   ] = await Promise.all([
     User.countDocuments(),
     Company.countDocuments(),
@@ -526,6 +528,12 @@ export const adminDashboard = asyncHandler(async (req, res) => {
       createdAt: { $gte: startOfTheMonth, $lt: endOfTheMonth },
     }),
     Job.countDocuments({
+      createdAt: { $gte: startOfTheMonth, $lt: endOfTheMonth },
+    }),
+    User.countDocuments({
+      createdAt: { $gte: startOfTheMonth, $lt: endOfTheMonth },
+    }),
+    Company.countDocuments({
       createdAt: { $gte: startOfTheMonth, $lt: endOfTheMonth },
     }),
   ]);
@@ -542,6 +550,8 @@ export const adminDashboard = asyncHandler(async (req, res) => {
         totalApplications,
         applicationsThisMonth,
         jobsThisMonth,
+        newUserThisMonth,
+        newCompanyThisMonth,
       },
       "Admin Dashboard Info"
     )
