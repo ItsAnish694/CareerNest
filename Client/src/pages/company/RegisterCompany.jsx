@@ -10,7 +10,7 @@ function RegisterCompany() {
     companyEmail: "",
     companyPassword: "",
     companyLogo: null,
-    companyLocation: "", // Single string for user input
+    // companyLocation: "", // Removed: Single string for user input
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -49,17 +49,16 @@ function RegisterCompany() {
     formData.append("companyEmail", form.companyEmail);
     formData.append("companyPassword", form.companyPassword);
 
-    // Parse the single companyLocation string into area, city, and district
-    const locationParts = form.companyLocation
-      .split(",")
-      .map((part) => part.trim());
-    const companyArea = locationParts[0] || "";
-    const companyCity = locationParts[1] || "";
-    const companyDistrict = locationParts[2] || "";
+    // Removed: Parse the single companyLocation string into area, city, and district
+    // const locationParts = form.companyLocation.split(',').map(part => part.trim());
+    // const companyArea = locationParts[0] || '';
+    // const companyCity = locationParts[1] || '';
+    // const companyDistrict = locationParts[2] || '';
 
-    formData.append("companyArea", companyArea);
-    formData.append("companyCity", companyCity);
-    formData.append("companyDistrict", companyDistrict);
+    // Removed: Appending location parts to formData
+    // formData.append("companyArea", companyArea);
+    // formData.append("companyCity", companyCity);
+    // formData.append("companyDistrict", companyDistrict);
 
     if (form.companyLogo) {
       formData.append("companyLogo", form.companyLogo);
@@ -120,6 +119,8 @@ function RegisterCompany() {
           disabled={loading}
           helperText="Strong password: 8 characters, numbers, uppercase, lowercase."
         />
+        {/* Removed: companyLocation InputField */}
+        {/*
         <InputField
           id="companyLocation"
           label="Company Location"
@@ -130,6 +131,7 @@ function RegisterCompany() {
           disabled={loading}
           helperText="Enter as: Area, City, District (e.g., Ramailo Chowk, Bharatpur, Chitwan)"
         />
+        */}
         <div>
           <label
             htmlFor="companyLogo"
@@ -151,7 +153,33 @@ function RegisterCompany() {
           disabled={loading}
           className="w-full flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors"
         >
-          {loading ? <LoadingSpinner variant="inline" /> : "Register Company"}
+          {loading ? (
+            <span className="flex items-center justify-center w-full h-full">
+              <svg
+                className="animate-spin h-4 w-4 text-white mr-2"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span className="text-white text-sm font-medium">Loading...</span>
+            </span>
+          ) : (
+            "Register Company"
+          )}
         </button>
       </form>
       <p className="mt-6 text-center text-gray-600">

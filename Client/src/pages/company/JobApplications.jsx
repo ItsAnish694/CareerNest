@@ -66,7 +66,7 @@ function JobApplications() {
   }, [jobId, currentPage, filterStatus]);
 
   useEffect(() => {
-    if (!authLoading && company?.isVerified === "Verified") {
+    if (!authLoading && company?.isVerified === "verified") {
       fetchApplications();
     } else if (!authLoading) {
       setLoading(false);
@@ -132,7 +132,7 @@ function JobApplications() {
     return (
       <NoDataMessage message="Please log in as a company to view applications." />
     );
-  if (company.isVerified !== "Verified")
+  if (company.isVerified !== "verified")
     return (
       <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow text-center my-10">
         <h2 className="text-3xl font-bold mb-4">Access Denied</h2>

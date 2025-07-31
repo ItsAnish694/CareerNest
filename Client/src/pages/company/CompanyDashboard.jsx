@@ -20,7 +20,7 @@ function CompanyDashboard() {
 
   useEffect(() => {
     if (!authLoading && company) {
-      if (company.isVerified === "Verified") {
+      if (company.isVerified === "verified") {
         fetchDashboardData();
       } else {
         setLoading(false);
@@ -51,7 +51,7 @@ function CompanyDashboard() {
     );
   }
 
-  if (company.isVerified !== "Verified") {
+  if (company.isVerified !== "verified") {
     return (
       <div className="max-w-xl mx-auto bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 p-6 rounded shadow my-10 text-center">
         <h2 className="text-xl font-bold mb-2">Account Not Verified</h2>

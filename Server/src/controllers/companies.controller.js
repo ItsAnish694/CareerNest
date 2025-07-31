@@ -164,7 +164,7 @@ export const verifyCompany = asyncHandler(async function (req, res) {
 
   if (!company) throw new ApiError(404, "Company Doesnt Exists");
 
-  if (company.isVerified === "Verified") {
+  if (company.isVerified === "verified") {
     throw new ApiError(
       400,
       "Already Verified",
@@ -172,7 +172,7 @@ export const verifyCompany = asyncHandler(async function (req, res) {
     );
   }
 
-  if (company.isVerified === "Pending") {
+  if (company.isVerified === "pending") {
     throw new ApiError(400, "Pending", "Verification Request Send");
   }
   const query = encodeURIComponent(
@@ -234,7 +234,7 @@ export const verifyCompany = asyncHandler(async function (req, res) {
   company.companyDistrict = normalizedDistrict;
   company.companyCity = normalizedCity;
   company.companyArea = normalizedArea;
-  company.isVerified = "Pending";
+  company.isVerified = "pending";
 
   await company.save();
 
@@ -295,6 +295,7 @@ export const loginCompany = asyncHandler(async function (req, res) {
   const options = {
     httpOnly: true,
     secure: true,
+    sameSite: "None",
   };
 
   return res
@@ -328,7 +329,7 @@ export const companyLogOut = asyncHandler(async function (req, res) {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "Lax",
+    sameSite: "None",
   };
 
   return res

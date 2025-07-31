@@ -14,11 +14,15 @@ import {
   faBars,
   faTimes,
   faBell, // Added for notifications
+  faTachometerAlt, // Admin Dashboard icon
+  faUsersCog, // Admin Manage Users icon
+  faBuildingFlag, // Admin Manage Companies icon
 } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 
 function Header() {
-  const { user, company, logout, loading } = useContext(AuthContext);
+  // Include 'admin' in the useContext destructuring
+  const { user, company, admin, logout, loading } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -28,7 +32,16 @@ function Header() {
       result = await logout("user");
     } else if (company) {
       result = await logout("company");
+    } else if (admin) {
+      // Handle admin logout
+      result = await logout("admin");
+    } else {
+      // Fallback for unexpected state, though AuthContext should handle clearing
+      // local states and cookies via its API calls.
+      toast.info("No active session to log out from.");
+      return;
     }
+
     if (result.success) {
       toast.success(result.message);
       navigate("/login");
@@ -71,13 +84,20 @@ function Header() {
     { to: "/company/profile", icon: faBuilding, label: "Company Profile" },
   ];
 
-  const renderMenuLinks = (items, onClick) =>
+  // NEW: Admin menu items
+  const adminMenuItems = [
+    { to: "/admin/dashboard", icon: faTachometerAlt, label: "Dashboard" },
+    { to: "/admin/users", icon: faUsersCog, label: "Manage Users" },
+    { to: "/admin/companies", icon: faBuildingFlag, label: "Manage Companies" },
+  ];
+
+  const renderMenuLinks = (items, onClickHandler) =>
     items.map((item) => (
       <Link
         key={item.to}
         to={item.to}
         className="hover:text-blue-200 transition-colors flex items-center relative" // Added relative for badge positioning
-        onClick={onClick}
+        onClick={onClickHandler} // Pass onClickHandler to close mobile menu
       >
         <FontAwesomeIcon icon={item.icon} className="mr-1" /> {item.label}
         {item.badge > 0 && ( // Conditionally render badge for desktop
@@ -94,7 +114,7 @@ function Header() {
         key={item.to}
         to={item.to}
         className="block w-full text-center py-3 px-4 hover:bg-blue-700 rounded-md text-lg font-medium transition-colors duration-200 relative" // Added relative for badge positioning
-        onClick={toggleMobileMenu}
+        onClick={toggleMobileMenu} // Always close mobile menu on click
       >
         <FontAwesomeIcon icon={item.icon} className="mr-3" /> {item.label}
         {item.badge > 0 && ( // Conditionally render badge for mobile
@@ -114,18 +134,21 @@ function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Link
-            to="/"
-            className="hover:text-blue-200 transition-colors flex items-center"
-          >
-            <FontAwesomeIcon icon={faHome} className="mr-1" /> Home
-          </Link>
-
+          {!admin && (
+            <Link
+              to="/"
+              className="hover:text-blue-200 transition-colors flex items-center"
+            >
+              <FontAwesomeIcon icon={faHome} className="mr-1" /> Home
+            </Link>
+          )}
+          {/* Conditional rendering for user, company, and admin desktop menus */}
           {!loading && user && renderMenuLinks(userMenuItems)}
-
           {!loading && company && renderMenuLinks(companyMenuItems)}
-
-          {!loading && (user || company) && (
+          {!loading && admin && renderMenuLinks(adminMenuItems)}{" "}
+          {/* NEW: Admin desktop menu */}
+          {/* Logout button for any logged-in role */}
+          {!loading && (user || company || admin) && (
             <button
               onClick={handleLogout}
               className="hover:text-blue-200 transition-colors flex items-center"
@@ -133,8 +156,8 @@ function Header() {
               <FontAwesomeIcon icon={faSignOutAlt} className="mr-1" /> Logout
             </button>
           )}
-
-          {!loading && !user && !company && (
+          {/* Login button if no one is logged in */}
+          {!loading && !user && !company && !admin && (
             <Link
               to="/login"
               className="hover:text-blue-200 transition-colors px-4 py-2 border border-white rounded-md"
@@ -186,19 +209,22 @@ function Header() {
           </button>
         </div>
         <div className="flex flex-col items-center space-y-4 px-4 pb-4">
-          <Link
-            to="/"
-            className="block w-full text-center py-3 px-4 hover:bg-blue-700 rounded-md text-lg font-medium transition-colors duration-200"
-            onClick={toggleMobileMenu}
-          >
-            <FontAwesomeIcon icon={faHome} className="mr-3" /> Home
-          </Link>
-
+          {!admin && (
+            <Link
+              to="/"
+              className="block w-full text-center py-3 px-4 hover:bg-blue-700 rounded-md text-lg font-medium transition-colors duration-200"
+              onClick={toggleMobileMenu}
+            >
+              <FontAwesomeIcon icon={faHome} className="mr-3" /> Home
+            </Link>
+          )}
+          {/* Conditional rendering for user, company, and admin mobile menus */}
           {!loading && user && renderMobileLinks(userMenuItems)}
-
           {!loading && company && renderMobileLinks(companyMenuItems)}
-
-          {!loading && (user || company) && (
+          {!loading && admin && renderMobileLinks(adminMenuItems)}{" "}
+          {/* NEW: Admin mobile menu */}
+          {/* Logout button for any logged-in role in mobile menu */}
+          {!loading && (user || company || admin) && (
             <button
               onClick={() => {
                 handleLogout();
@@ -209,8 +235,8 @@ function Header() {
               <FontAwesomeIcon icon={faSignOutAlt} className="mr-3" /> Logout
             </button>
           )}
-
-          {!loading && !user && !company && (
+          {/* Login button if no one is logged in in mobile menu */}
+          {!loading && !user && !company && !admin && (
             <Link
               to="/login"
               className="block w-full text-center py-3 px-4 hover:bg-blue-700 rounded-md border border-white text-lg font-medium transition-colors duration-200"

@@ -328,7 +328,7 @@ export const loginUser = asyncHandler(async function (req, res) {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "none",
+    sameSite: "None",
   };
 
   return res
@@ -354,6 +354,7 @@ export const userLogOut = asyncHandler(async function (req, res) {
   const options = {
     httpOnly: true,
     secure: true,
+    sameSite: "None",
   };
 
   return res

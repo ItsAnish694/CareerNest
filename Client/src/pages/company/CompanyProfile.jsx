@@ -23,9 +23,9 @@ function CompanyProfile() {
   }
 
   const statusClasses = {
-    "Not Verified": "bg-red-100 text-red-700",
-    Pending: "bg-yellow-100 text-yellow-700",
-    Verified: "bg-green-100 text-green-700",
+    unverified: "bg-red-100 text-red-700",
+    pending: "bg-yellow-100 text-yellow-700",
+    verified: "bg-green-100 text-green-700",
   };
 
   return (

@@ -10,9 +10,7 @@ function VerifyCompany() {
 
   const [form, setForm] = useState({
     companyPhoneNumber: "",
-    companyDistrict: "",
-    companyCity: "",
-    companyArea: "",
+    companyLocation: "", // Single string for combined location
   });
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -69,9 +67,18 @@ function VerifyCompany() {
 
     const formData = new FormData();
     formData.append("companyPhoneNumber", form.companyPhoneNumber);
-    formData.append("companyDistrict", form.companyDistrict);
-    formData.append("companyCity", form.companyCity);
-    formData.append("companyArea", form.companyArea);
+
+    // Parse the single companyLocation string into area, city, and district
+    const locationParts = form.companyLocation
+      .split(",")
+      .map((part) => part.trim());
+    const companyArea = locationParts[0] || "";
+    const companyCity = locationParts[1] || "";
+    const companyDistrict = locationParts[2] || "";
+
+    formData.append("companyDistrict", companyDistrict);
+    formData.append("companyCity", companyCity);
+    formData.append("companyArea", companyArea);
     formData.append("document", document);
 
     try {
@@ -79,6 +86,7 @@ function VerifyCompany() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       if (response.data.Success) {
+        toast.success("Company details submitted for verification!");
         const link = response.data.data?.redirectLink;
         if (link) {
           window.location.href = link;
@@ -87,7 +95,7 @@ function VerifyCompany() {
         }
       }
     } catch (error) {
-      console.log(error.message);
+      // Error handled by interceptor, no additional toast here
     } finally {
       setLoading(false);
     }
@@ -121,28 +129,13 @@ function VerifyCompany() {
           required
         />
         <InputField
-          id="companyDistrict"
-          label="Company District"
-          value={form.companyDistrict}
+          id="companyLocation" // Single location input
+          label="Company Location (Area, City, District)"
+          value={form.companyLocation}
           onChange={handleChange}
           disabled={loading}
           required
-        />
-        <InputField
-          id="companyCity"
-          label="Company City"
-          value={form.companyCity}
-          onChange={handleChange}
-          disabled={loading}
-          required
-        />
-        <InputField
-          id="companyArea"
-          label="Company Area"
-          value={form.companyArea}
-          onChange={handleChange}
-          disabled={loading}
-          required
+          placeholder="e.g., Ramailo Chowk, Bharatpur, Chitwan"
         />
         <div>
           <label
@@ -170,7 +163,31 @@ function VerifyCompany() {
           className="w-full flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors"
         >
           {loading ? (
-            <LoadingSpinner variant="inline" />
+            <span className="flex items-center justify-center w-full h-full">
+              <svg
+                className="animate-spin h-4 w-4 text-white mr-2"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span className="text-white text-sm font-medium">
+                Submitting...
+              </span>
+            </span>
           ) : (
             "Submit for Verification"
           )}
@@ -180,7 +197,15 @@ function VerifyCompany() {
   );
 }
 
-function InputField({ id, label, value, onChange, disabled, required }) {
+function InputField({
+  id,
+  label,
+  value,
+  onChange,
+  disabled,
+  required,
+  placeholder,
+}) {
   return (
     <div>
       <label
@@ -196,6 +221,7 @@ function InputField({ id, label, value, onChange, disabled, required }) {
         onChange={onChange}
         disabled={disabled}
         required={required}
+        placeholder={placeholder}
         className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>

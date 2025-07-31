@@ -2,36 +2,45 @@ import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { toast } from "react-toastify"; // Ensure toast is imported
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState("user"); // Default role
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
 
-  const { login } = useContext(AuthContext);
+  const { login } = useContext(AuthContext); // Only need login function from AuthContext
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setErrorMessage("");
 
-    const result = await login(role, email, password);
+    const result = await login(role, email, password); // Pass email (or username for admin) and password
     setLoading(false);
 
     if (result.success) {
-      if (role === "user") navigate("/jobs");
-      else if (role === "company") {
+      toast.success(result.message); // Show success toast
+      if (role === "user") {
+        navigate("/jobs");
+      } else if (role === "company") {
+        // Assuming result.entity is available and contains isVerified
         navigate(
-          result.entity.isVerified === "Verified"
+          result.entity?.isVerified === "verified" // Use optional chaining and lowercase "verified"
             ? "/company/dashboard"
             : "/company/profile"
         );
+      } else if (role === "admin") {
+        // Admin login provides a redirLink from the backend
+        navigate(result.redirLink || "/admin/dashboard"); // Navigate to admin dashboard or default
       }
     } else {
-      setErrorMessage(result.message || "Login failed. Please try again.");
+      // Error message is already handled by the AuthContext's login function,
+      // which uses axios interceptors for toast.error.
+      // So, no need to set local errorMessage state here directly.
+      // If you want a specific toast here, you could use:
+      // toast.error(result.message || "Login failed. Please try again.");
     }
   };
 
@@ -41,46 +50,63 @@ function Login() {
         Login to CareerNest
       </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <label className="block text-sm font-medium text-gray-700">
-          Login As
+        <div>
+          <label
+            htmlFor="role"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Login As
+          </label>
           <select
-            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            id="role"
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none custom-select-arrow"
             value={role}
             onChange={(e) => setRole(e.target.value)}
             disabled={loading}
           >
             <option value="user">Job Seeker</option>
             <option value="company">Company</option>
+            <option value="admin">Admin</option> {/* Added Admin option */}
           </select>
-        </label>
+        </div>
 
-        <label className="block text-sm font-medium text-gray-700">
-          Email
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            {role === "admin" ? "Username" : "Email"} {/* Dynamic label */}
+          </label>
           <input
-            type="email"
-            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            type={role === "admin" ? "text" : "email"}
+            id="email"
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
           />
-        </label>
+        </div>
 
-        <label className="block text-sm font-medium text-gray-700">
-          Password
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Password
+          </label>
           <input
             type="password"
-            className="w-full p-3 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            id="password"
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={loading}
           />
-        </label>
+        </div>
 
-        {errorMessage && (
-          <div className="text-red-600 text-sm font-medium">{errorMessage}</div>
-        )}
+        {/* Removed local errorMessage state and display, relying on toast */}
 
         <button
           type="submit"
@@ -100,7 +126,7 @@ function Login() {
           Register as Company
         </Link>
       </p>
-      <p>reverentpasteur6@deliveryotter.com</p>
+      {/* Removed the hardcoded email address */}
     </div>
   );
 }

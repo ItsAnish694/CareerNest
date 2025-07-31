@@ -56,7 +56,7 @@ function CreateJobPosting() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (company.isVerified !== "Verified") {
+    if (company.isVerified !== "verified") {
       setLoading(false);
       return;
     }
@@ -99,7 +99,7 @@ function CreateJobPosting() {
       </div>
     );
 
-  if (!company || company.isVerified !== "Verified") {
+  if (!company || company.isVerified !== "verified") {
     return (
       <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md my-10 text-center">
         <h2 className="text-3xl font-bold text-gray-900 mb-6">Access Denied</h2>

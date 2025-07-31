@@ -22,9 +22,7 @@ function VerifyUser() {
   const { token } = useParams();
   const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [district, setDistrict] = useState("");
-  const [city, setCity] = useState("");
-  const [area, setArea] = useState("");
+  const [location, setLocation] = useState(""); // Single state for combined location
   const [experiencedYears, setExperiencedYears] = useState("No Experience");
   const [skills, setSkills] = useState("");
   const [resume, setResume] = useState(null);
@@ -71,6 +69,13 @@ function VerifyUser() {
 
     const formData = new FormData();
     formData.append("phoneNumber", phoneNumber);
+
+    // Parse the single location string into area, city, and district
+    const locationParts = location.split(",").map((part) => part.trim());
+    const area = locationParts[0] || "";
+    const city = locationParts[1] || "";
+    const district = locationParts[2] || "";
+
     formData.append("district", district);
     formData.append("city", city);
     formData.append("area", area);
@@ -99,10 +104,14 @@ function VerifyUser() {
         },
       });
       if (response.data.Success) {
+        toast.success("Profile completed and verified successfully!");
         navigate("/login");
       }
     } catch (error) {
-      console.log(error.message);
+      toast.error(
+        error.response?.data?.Error?.Message ||
+          "Verification failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -145,53 +154,20 @@ function VerifyUser() {
         </div>
         <div>
           <label
-            htmlFor="district"
+            htmlFor="location"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            District
+            Location (Area, City, District)
           </label>
           <input
             type="text"
-            id="district"
+            id="location"
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={district}
-            onChange={(e) => setDistrict(e.target.value)}
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
             required
             disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="city"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            City
-          </label>
-          <input
-            type="text"
-            id="city"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            required
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="area"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Area
-          </label>
-          <input
-            type="text"
-            id="area"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-            required
-            disabled={loading}
+            placeholder="e.g., Ramailo Chowk, Bharatpur, Chitwan"
           />
         </div>
         <div>
@@ -257,7 +233,29 @@ function VerifyUser() {
           disabled={loading}
         >
           {loading ? (
-            <LoadingSpinner variant="inline" />
+            <span className="flex items-center justify-center w-full h-full">
+              <svg
+                className="animate-spin h-4 w-4 text-white mr-2"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span className="text-white text-sm font-medium">Loading...</span>
+            </span>
           ) : (
             "Complete Verification"
           )}

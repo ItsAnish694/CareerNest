@@ -35,6 +35,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
+    sameSite: "None",
     maxAge: 60 * 60 * 1000,
   };
 
@@ -43,7 +44,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, options)
     .json(
       new ApiResponse(200, {
-        redirLink: `${process.env.CORS_ORIGIN}/admin/dashboard`,
+        redirLink: `/admin/dashboard`,
       })
     );
 });
@@ -182,14 +183,9 @@ export const updateCompanyStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Unknown Status", "No Status To Update");
   }
 
-  if (!["accepted", "rejected"].includes(status)) {
+  if (!["verified", "rejected"].includes(status)) {
     throw new ApiError(400, "Invalid Status", "Provide Valid Status");
   }
-
-  const validStatus = {
-    accepted: "verified",
-    rejected: "rejected",
-  };
 
   if (!mongoose.isValidObjectId(companyID)) {
     throw new ApiError(400, "Invalid ID", "Not A Valid ID");
@@ -198,7 +194,7 @@ export const updateCompanyStatus = asyncHandler(async (req, res) => {
   const company = await Company.findByIdAndUpdate(
     companyID,
     {
-      $set: { isVerified: validStatus[status] },
+      $set: { isVerified: status },
     },
     { new: true }
   )
@@ -210,12 +206,12 @@ export const updateCompanyStatus = asyncHandler(async (req, res) => {
   }
 
   const emailSubject = {
-    accepted: "Company Accepted - CareerNest Registration",
+    verified: "Company Accepted - CareerNest Registration",
     rejected: "Company Rejected - CareerNest Registration",
   };
 
   const emailBody = {
-    accepted:
+    verified:
       `Dear ${company.companyName},\n\n` +
       `We are pleased to inform you that your company registration on **CareerNest** has been **ACCEPTED** by the admin team.\n\n` +
       `You now have full access to the company dashboard, where you can:\n` +
@@ -564,6 +560,7 @@ export const logoutAdmin = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
+    sameSite: "None",
   };
 
   return res

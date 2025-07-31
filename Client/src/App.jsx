@@ -1,7 +1,8 @@
-import { useContext, useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
+
 import RegisterUser from "./pages/user/RegisterUser";
 import VerifyUser from "./pages/user/VerifyUser";
 import Login from "./pages/auth/Login";
@@ -16,6 +17,7 @@ import UpdateUserPassword from "./pages/user/UpdateUserPassword";
 import UpdateUserEmail from "./pages/user/UpdateUserEmail";
 import NotificationsPage from "./pages/user/NotificationsPage";
 import VerifyUserEmail from "./pages/user/VerifyUserEmail";
+
 import RegisterCompany from "./pages/company/RegisterCompany";
 import VerifyCompany from "./pages/company/VerifyCompany";
 import CompanyProfile from "./pages/company/CompanyProfile";
@@ -27,13 +29,22 @@ import CompanyDashboard from "./pages/company/CompanyDashboard";
 import CompanyJobPostings from "./pages/company/CompanyJobPostings";
 import CreateJobPosting from "./pages/company/CreateJobPosting";
 import JobApplications from "./pages/company/JobApplications";
+import UpdateCompanyLogo from "./pages/company/UpdateCompanyLogo";
+
 import NotFound from "./pages/common/NotFound";
 import { AuthContext } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import HomePage from "./pages/common/HomePage";
 import UpdateProfilePicture from "./pages/user/UpdateProfilePicture";
 import UpdateResume from "./pages/user/UpdateResume";
-import UpdateCompanyLogo from "./pages/company/UpdateCompanyLogo";
+
+// Admin Components - NEW IMPORTS
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUserList from "./pages/admin/AdminUserList";
+import AdminUserDetail from "./pages/admin/AdminUserDetail";
+import AdminCompanyList from "./pages/admin/AdminCompanyList";
+import AdminCompanyDetail from "./pages/admin/AdminCompanyDetail";
 
 function App() {
   const { checkAuthStatus } = useContext(AuthContext);
@@ -47,6 +58,7 @@ function App() {
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/user/register" element={<RegisterUser />} />
@@ -58,6 +70,8 @@ function App() {
           <Route path="/jobs" element={<JobListing />} />
           <Route path="/jobs/:jobId" element={<JobDetails />} />
           <Route path="/search" element={<JobListing />} />
+
+          {/* User Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["user"]} />}>
             <Route path="/user/profile" element={<UserProfile />} />
             <Route
@@ -91,6 +105,8 @@ function App() {
               element={<NotificationsPage />}
             />
           </Route>
+
+          {/* Company Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
             <Route path="/company/profile" element={<CompanyProfile />} />
             <Route
@@ -117,6 +133,25 @@ function App() {
               element={<JobApplications />}
             />
           </Route>
+
+          {/* Admin Protected Routes */}
+          <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              {/* AdminLayout wraps all admin pages */}
+              <Route index element={<AdminDashboard />} />{" "}
+              {/* Default admin route */}
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUserList />} />
+              <Route path="users/:userID" element={<AdminUserDetail />} />
+              <Route path="companies" element={<AdminCompanyList />} />
+              <Route
+                path="companies/:companyID"
+                element={<AdminCompanyDetail />}
+              />
+            </Route>
+          </Route>
+
+          {/* Fallback for unknown routes */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

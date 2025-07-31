@@ -22,7 +22,7 @@ function CompanyJobPostings() {
 
   const limit = 9;
   useEffect(() => {
-    if (!authLoading && company?.isVerified === "Verified") {
+    if (!authLoading && company?.isVerified === "verified") {
       fetchJobs();
     } else if (!authLoading) {
       setLoading(false);
@@ -66,7 +66,7 @@ function CompanyJobPostings() {
       <NoDataMessage message="Please log in as a company to view your job postings." />
     );
 
-  if (company.isVerified !== "Verified")
+  if (company.isVerified !== "verified")
     return (
       <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md my-10 text-center">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">Access Denied</h2>
