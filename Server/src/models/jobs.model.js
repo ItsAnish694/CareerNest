@@ -69,10 +69,15 @@ const jobSchema = new Schema(
 
 jobSchema.index({
   jobTitle: "text",
-  jobDescription: "text",
   requiredSkills: "text",
+  jobDescription: "text",
   jobType: "text",
   experienceLevel: "text",
 });
+
+jobSchema.index(
+  { applicationDeadline: 1 },
+  { expireAfterSeconds: 60 * 60 * 24 * 30 }
+);
 
 export const Job = model("Job", jobSchema);

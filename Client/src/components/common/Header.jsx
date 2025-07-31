@@ -13,15 +13,13 @@ import {
   faChartBar,
   faBars,
   faTimes,
-  faBell, // Added for notifications
-  faTachometerAlt, // Admin Dashboard icon
-  faUsersCog, // Admin Manage Users icon
-  faBuildingFlag, // Admin Manage Companies icon
+  faBell,
+  faTachometerAlt,
+  faUsersCog,
+  faBuildingFlag,
 } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
 
 function Header() {
-  // Include 'admin' in the useContext destructuring
   const { user, company, admin, logout, loading } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -33,28 +31,22 @@ function Header() {
     } else if (company) {
       result = await logout("company");
     } else if (admin) {
-      // Handle admin logout
       result = await logout("admin");
     } else {
-      // Fallback for unexpected state, though AuthContext should handle clearing
-      // local states and cookies via its API calls.
-      toast.info("No active session to log out from.");
+      // No active session, so do nothing.
       return;
     }
 
     if (result.success) {
-      toast.success(result.message);
       navigate("/login");
-    } else {
-      toast.error(result.message);
     }
+    // No error message will be shown on failure.
   };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Close menu on Esc key press
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -70,10 +62,10 @@ function Header() {
     { to: "/user/applied-jobs", icon: faClipboardList, label: "Applied Jobs" },
     { to: "/user/bookmarked-jobs", icon: faBookmark, label: "Bookmarks" },
     {
-      to: "/user/profile/notifications", // Link to notifications page
+      to: "/user/profile/notifications",
       icon: faBell,
       label: "Notifications",
-      badge: user?.unReadNotificationCount, // Use unReadNotificationCount from user object
+      badge: user?.unReadNotificationCount,
     },
     { to: "/user/profile", icon: faUser, label: "My Profile" },
   ];
@@ -84,7 +76,6 @@ function Header() {
     { to: "/company/profile", icon: faBuilding, label: "Company Profile" },
   ];
 
-  // NEW: Admin menu items
   const adminMenuItems = [
     { to: "/admin/dashboard", icon: faTachometerAlt, label: "Dashboard" },
     { to: "/admin/users", icon: faUsersCog, label: "Manage Users" },
@@ -96,11 +87,11 @@ function Header() {
       <Link
         key={item.to}
         to={item.to}
-        className="hover:text-blue-200 transition-colors flex items-center relative" // Added relative for badge positioning
-        onClick={onClickHandler} // Pass onClickHandler to close mobile menu
+        className="hover:text-blue-200 transition-colors flex items-center relative"
+        onClick={onClickHandler}
       >
         <FontAwesomeIcon icon={item.icon} className="mr-1" /> {item.label}
-        {item.badge > 0 && ( // Conditionally render badge for desktop
+        {item.badge > 0 && (
           <span className="ml-1 px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full absolute -top-2 -right-3">
             {item.badge}
           </span>
@@ -113,11 +104,11 @@ function Header() {
       <Link
         key={item.to}
         to={item.to}
-        className="block w-full text-center py-3 px-4 hover:bg-blue-700 rounded-md text-lg font-medium transition-colors duration-200 relative" // Added relative for badge positioning
-        onClick={toggleMobileMenu} // Always close mobile menu on click
+        className="block w-full text-center py-3 px-4 hover:bg-blue-700 rounded-md text-lg font-medium transition-colors duration-200 relative"
+        onClick={toggleMobileMenu}
       >
         <FontAwesomeIcon icon={item.icon} className="mr-3" /> {item.label}
-        {item.badge > 0 && ( // Conditionally render badge for mobile
+        {item.badge > 0 && (
           <span className="ml-2 px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full absolute top-1/2 -translate-y-1/2 right-4">
             {item.badge}
           </span>
@@ -128,11 +119,13 @@ function Header() {
   return (
     <header className="bg-blue-700 text-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold">
+        <Link
+          to={admin ? "/admin/dashboard" : "/"}
+          className="text-2xl font-bold"
+        >
           CareerNest
         </Link>
 
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
           {!admin && (
             <Link
@@ -142,12 +135,9 @@ function Header() {
               <FontAwesomeIcon icon={faHome} className="mr-1" /> Home
             </Link>
           )}
-          {/* Conditional rendering for user, company, and admin desktop menus */}
           {!loading && user && renderMenuLinks(userMenuItems)}
           {!loading && company && renderMenuLinks(companyMenuItems)}
-          {!loading && admin && renderMenuLinks(adminMenuItems)}{" "}
-          {/* NEW: Admin desktop menu */}
-          {/* Logout button for any logged-in role */}
+          {!loading && admin && renderMenuLinks(adminMenuItems)}
           {!loading && (user || company || admin) && (
             <button
               onClick={handleLogout}
@@ -156,7 +146,6 @@ function Header() {
               <FontAwesomeIcon icon={faSignOutAlt} className="mr-1" /> Logout
             </button>
           )}
-          {/* Login button if no one is logged in */}
           {!loading && !user && !company && !admin && (
             <Link
               to="/login"
@@ -167,7 +156,6 @@ function Header() {
           )}
         </nav>
 
-        {/* Mobile Menu Button */}
         <div className="md:hidden">
           <button
             onClick={toggleMobileMenu}
@@ -184,7 +172,6 @@ function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
       <div
         className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${
           isMobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -192,7 +179,6 @@ function Header() {
         onClick={toggleMobileMenu}
       ></div>
 
-      {/* Mobile Menu Content */}
       <nav
         id="mobile-menu"
         className={`fixed top-0 right-0 w-64 h-full bg-blue-800 z-50 transform transition-transform duration-300 ease-in-out ${
@@ -218,12 +204,9 @@ function Header() {
               <FontAwesomeIcon icon={faHome} className="mr-3" /> Home
             </Link>
           )}
-          {/* Conditional rendering for user, company, and admin mobile menus */}
           {!loading && user && renderMobileLinks(userMenuItems)}
           {!loading && company && renderMobileLinks(companyMenuItems)}
-          {!loading && admin && renderMobileLinks(adminMenuItems)}{" "}
-          {/* NEW: Admin mobile menu */}
-          {/* Logout button for any logged-in role in mobile menu */}
+          {!loading && admin && renderMobileLinks(adminMenuItems)}
           {!loading && (user || company || admin) && (
             <button
               onClick={() => {
@@ -235,7 +218,6 @@ function Header() {
               <FontAwesomeIcon icon={faSignOutAlt} className="mr-3" /> Logout
             </button>
           )}
-          {/* Login button if no one is logged in in mobile menu */}
           {!loading && !user && !company && !admin && (
             <Link
               to="/login"

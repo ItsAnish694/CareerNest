@@ -1,11 +1,10 @@
 function LoadingSpinner({
-  variant = "page", // "page" or "inline"
+  variant = "page",
   message = "Loading...",
   subMessage = "Please wait a moment.",
-  size = 64, // px size for page variant
+  size = 64,
 }) {
   if (variant === "inline") {
-    // small spinner only, no text, for buttons
     return (
       <svg
         className="animate-spin text-white"

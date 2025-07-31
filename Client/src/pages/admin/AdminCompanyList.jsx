@@ -5,7 +5,6 @@ import NoDataMessage from "../../components/common/NoDataMessage";
 import Pagination from "../../components/common/Pagination";
 import { AuthContext } from "../../contexts/AuthContext";
 import { Link, useSearchParams } from "react-router-dom";
-import { toast } from "react-toastify";
 import Modal from "../../components/common/Modal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -13,6 +12,8 @@ import {
   faEdit,
   faSearch,
   faCheckCircle,
+  faInfoCircle,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 
 const companyStatusOptions = [
@@ -38,6 +39,7 @@ function AdminCompanyList() {
   const [companyToDelete, setCompanyToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [message, setMessage] = useState({ text: "", type: "" });
 
   const limit = 10;
 
@@ -49,6 +51,7 @@ function AdminCompanyList() {
     setCurrentPage(pageParam);
     setSearchQuery(qParam);
     setStatusFilter(statusParam);
+    setMessage({ text: "", type: "" }); // Clear message on search/filter/page change
 
     if (!authLoading && admin?.role === "admin") {
       fetchCompanies(pageParam, qParam, statusParam);
@@ -114,11 +117,14 @@ function AdminCompanyList() {
   const handleDeleteCompany = async () => {
     if (!companyToDelete) return;
     setIsDeleting(true);
+    setMessage({ text: "", type: "" });
     try {
       await api.delete(`/admin/companies/${companyToDelete}`);
-      toast.success("Company deleted successfully!");
+      setMessage({ text: "Company deleted successfully!", type: "success" });
       setCompanyToDelete(null);
       fetchCompanies(currentPage, searchQuery, statusFilter);
+    } catch {
+      setMessage({ text: "Failed to delete company.", type: "error" });
     } finally {
       setIsDeleting(false);
     }
@@ -135,6 +141,30 @@ function AdminCompanyList() {
       <h2 className="text-3xl font-bold text-center text-gray-900 mb-6 border-b pb-3">
         Manage Companies
       </h2>
+
+      {message.text && (
+        <div
+          className={`flex items-center p-4 mb-6 rounded-md ${
+            message.type === "success"
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          <FontAwesomeIcon
+            icon={faInfoCircle}
+            className={`mr-3 ${
+              message.type === "success" ? "text-green-500" : "text-red-500"
+            }`}
+          />
+          <p>{message.text}</p>
+          <button
+            onClick={() => setMessage({ text: "", type: "" })}
+            className="ml-auto text-current hover:opacity-75 transition-opacity"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+      )}
 
       {/* Search + Filter */}
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">

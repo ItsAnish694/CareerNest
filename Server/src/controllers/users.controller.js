@@ -309,7 +309,11 @@ export const loginUser = asyncHandler(async function (req, res) {
     throw new ApiError(404, "User Not Found", "User With This Email Not Found");
 
   if (!(await user.checkPassword(passwordTrimmed)))
-    throw new ApiError(400, "Wrong Password", "The Provided Password is Wrong");
+    throw new ApiError(
+      400,
+      "Wrong Email or Password",
+      "The Provided Email or Password is Wrong"
+    );
 
   if (!user.isVerified)
     throw new ApiError(
@@ -1223,11 +1227,16 @@ export const searchJobs = asyncHandler(async function (req, res) {
   const allKeyWords = [...queryArray];
 
   for (const categorie of categories) {
-    allKeyWords.push(
-      ...searchDictionary[categorie].filter((dictionaryValue) =>
+    const matchedValues = searchDictionary[categorie].filter(
+      (dictionaryValue) =>
         queryArray.some((val) => dictionaryValue.startsWith(val))
-      )
     );
+
+    if (categorie === "jobType" || categorie === "experienceLevel") {
+      allKeyWords.push(...matchedValues.map((val) => `"${val}"`));
+    } else {
+      allKeyWords.push(...matchedValues);
+    }
   }
 
   if (!(allKeyWords.length > 0)) {
@@ -1273,7 +1282,10 @@ export const searchJobs = asyncHandler(async function (req, res) {
         },
       },
       {
-        $sort: { score: -1, createdAt: -1 },
+        $sort: {
+          score: -1,
+          createdAt: -1,
+        },
       },
       { $skip: skip },
       {

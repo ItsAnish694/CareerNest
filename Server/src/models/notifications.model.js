@@ -28,4 +28,9 @@ const notificationSchema = new Schema(
 
 notificationSchema.index({ userID: 1, isViewed: 1 });
 
+notificationSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 60 * 60 * 24 * 7 }
+);
+
 export const Notification = model("Notification", notificationSchema);

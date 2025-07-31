@@ -23,7 +23,7 @@ export const loginAdmin = asyncHandler(async (req, res) => {
       password.trim() === process.env.ADMIN_PASSWORD
     )
   ) {
-    throw new ApiError(400, "Wrong Password", "Wrong Username or password");
+    throw new ApiError(400, "Wrong Input", "Wrong Username or Password");
   }
 
   const accessToken = jwt.sign(

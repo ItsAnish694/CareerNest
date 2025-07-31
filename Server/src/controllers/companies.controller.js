@@ -281,8 +281,8 @@ export const loginCompany = asyncHandler(async function (req, res) {
   if (!(await company.checkPassword(passwordTrimmed)))
     throw new ApiError(
       400,
-      "Wrong Password",
-      "The Provided Password is Invalid"
+      "Wrong Email or Password",
+      "The Provided Email Or Password is Wrong"
     );
 
   const accessToken = company.generateAccessToken();

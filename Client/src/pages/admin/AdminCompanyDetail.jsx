@@ -4,8 +4,8 @@ import api from "../../services/api";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import NoDataMessage from "../../components/common/NoDataMessage";
 import { AuthContext } from "../../contexts/AuthContext";
-import { toast } from "react-toastify";
 import Modal from "../../components/common/Modal";
+import { toast } from "react-toastify";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
@@ -16,6 +16,8 @@ import {
   faFileAlt,
 } from "@fortawesome/free-solid-svg-icons";
 
+// This is the main component for the admin company detail page.
+// It allows an administrator to view, edit, and manage a company's profile.
 function AdminCompanyDetail() {
   const { companyID } = useParams();
   const navigate = useNavigate();
@@ -34,6 +36,7 @@ function AdminCompanyDetail() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
+  // Fetch company details when the component mounts or dependencies change.
   useEffect(() => {
     if (!authLoading) {
       if (admin?.role === "admin") {
@@ -72,14 +75,17 @@ function AdminCompanyDetail() {
     }
   }
 
+  // Handles changes to form input fields.
   const handleChange = ({ target: { id, value } }) => {
     setForm((prev) => ({ ...prev, [id]: value }));
   };
 
+  // Handles the form submission to update the company's profile.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
 
+    // Parses the combined location string into individual area, city, and district.
     const [companyArea = "", companyCity = "", companyDistrict = ""] =
       form.companyLocation.split(",").map((s) => s.trim());
 
@@ -94,61 +100,77 @@ function AdminCompanyDetail() {
         companyDistrict,
       });
       if (data.Success) {
-        toast.success("Company profile updated successfully!");
-        setCompany(data.data);
-        navigate("/admin/companies");
+        // Using toast.success for success message.
+        toast.success("Company profile updated successfully.");
+      } else {
+        // Using toast.error for error message.
+        toast.error("Failed to update company profile.");
       }
     } catch {
+      // Using toast.error for catch-all error.
       toast.error("Failed to update company profile.");
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // Handles updating the company's verification status.
   const handleUpdateStatus = async (status) => {
     setIsProcessing(true);
+
     try {
       const { data } = await api.patch(
         `/admin/companies/${companyID}?status=${status}`
       );
       if (data.Success) {
-        toast.success(`Company status updated to ${status} and email sent!`);
+        // Using toast.success for success message.
+        toast.success(`Company status updated to '${status}'.`);
         setCompany(data.data);
         setForm((prev) => ({ ...prev, isVerified: status }));
-        navigate("/admin/companies");
       } else {
+        // Using toast.error for error message.
         toast.error(data.Error?.Message || "Status update failed.");
       }
     } catch {
+      // Using toast.error for catch-all error.
       toast.error("Status update failed.");
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // Handles the deletion of the company account.
   const handleDeleteCompany = async () => {
     setIsConfirmingDelete(false);
     setIsProcessing(true);
+
     try {
       await api.delete(`/admin/companies/${companyID}`);
+      // Using toast.success for success message.
       toast.success("Company account deleted successfully!");
+      // Redirect to the companies list after successful deletion.
       navigate("/admin/companies");
     } catch {
+      // Using toast.error for catch-all error.
       toast.error("Failed to delete company account.");
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // Display a loading spinner while fetching data.
   if (authLoading || loading) return <LoadingSpinner />;
 
+  // Display an access denied message if the user is not an admin.
   if (!admin || admin.role !== "admin")
     return (
       <NoDataMessage message="Access Denied: You must be logged in as an administrator to view this page." />
     );
 
+  // Display a not found message if the company data is not available.
   if (!company) return <NoDataMessage message="Company not found." />;
 
+  // Logic to determine if the "Accept" and "Reject" buttons should be enabled.
   const canAccept =
     !isProcessing &&
     (company.isVerified === "pending" || company.isVerified === "rejected") &&
