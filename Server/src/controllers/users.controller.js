@@ -1214,7 +1214,15 @@ export const searchJobs = asyncHandler(async function (req, res) {
     .map((val) => val.trim().toLowerCase())
     .filter((query) => query !== "");
 
-  if (queryArray.length > 10) {
+  if (!mongoose.isValidObjectId(userID)) {
+    throw new ApiError(
+      400,
+      "Invalid User ID",
+      "The Id You Provided Is Invalid"
+    );
+  }
+
+  if (queryArray.length > 4) {
     throw new ApiError(
       400,
       "Too Many Search Params",
@@ -1244,14 +1252,6 @@ export const searchJobs = asyncHandler(async function (req, res) {
       404,
       "No Jobs Found",
       "There Are No Jobs Related To The Search"
-    );
-  }
-
-  if (!mongoose.isValidObjectId(userID)) {
-    throw new ApiError(
-      400,
-      "Invalid User ID",
-      "The Id You Provided Is Invalid"
     );
   }
 
