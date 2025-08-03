@@ -340,7 +340,7 @@ export const companyLogOut = asyncHandler(async function (req, res) {
 });
 
 export const companyProfile = asyncHandler(async function (req, res) {
-  if (req.user && !req.user.isVerified === "Verified")
+  if (req.user && !req.user.isVerified === "verified")
     throw new ApiError(400, "Unverified User");
 
   const companyProfileInfo = await Company.findById(req.user?._id)
@@ -623,7 +623,7 @@ export const createJobPosting = asyncHandler(async function (req, res) {
 
   const company = await Company.findById(companyID).select("isVerified").lean();
 
-  if (company.isVerified !== "Verified") {
+  if (company.isVerified !== "verified") {
     throw new ApiError(
       400,
       "Company Not Verified",
