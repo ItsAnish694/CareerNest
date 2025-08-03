@@ -47,7 +47,6 @@ function UpdateCompanyProfileInfo() {
     e.preventDefault();
     setLoading(true);
 
-    // Parse the single companyLocation string into area, city, and district
     const locationParts = form.companyLocation
       .split(",")
       .map((part) => part.trim());
@@ -66,12 +65,11 @@ function UpdateCompanyProfileInfo() {
     try {
       const response = await api.patch("/company/profile", updatePayload);
       if (response.data.Success) {
-        toast.success("Company profile updated successfully!"); // Success toast
-        await checkAuthStatus(); // Re-fetch auth status to update context with new data
-        navigate("/company/profile"); // Navigate back to profile page
+        toast.success("Company profile updated successfully!");
+        await checkAuthStatus();
+        navigate("/company/profile");
       }
     } catch (error) {
-      // Error handled globally by interceptor, but a specific toast for this might be useful
       toast.error(
         error.response?.data?.Error?.Message ||
           "Failed to update profile. Please try again."
@@ -116,7 +114,7 @@ function UpdateCompanyProfileInfo() {
           placeholder="Tell us about your company..."
         />
         <InputField
-          id="companyLocation" // Single location input field
+          id="companyLocation"
           label="Company Location"
           value={form.companyLocation}
           onChange={handleChange}

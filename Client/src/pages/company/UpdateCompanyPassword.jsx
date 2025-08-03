@@ -34,8 +34,10 @@ function UpdateCompanyPassword() {
         await logout("company");
         navigate("/login");
       }
-    } catch {
-      // Handled globally by interceptor
+    } catch (err) {
+      toast.error(
+        err.response?.data?.Error?.Message || "Error Updating Password"
+      );
     } finally {
       setLoading(false);
     }

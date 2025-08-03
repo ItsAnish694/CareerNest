@@ -129,7 +129,7 @@ function AdminUserDetail() {
       toast.success("User account deleted successfully!");
       navigate("/admin/users");
     } catch {
-      // Error handled globally by interceptor
+      //lol
     } finally {
       setIsDeleting(false);
     }
@@ -233,7 +233,7 @@ function AdminUserDetail() {
             className="flex-grow flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors"
           >
             {isUpdating ? (
-              <SpinnerWithText text="Updating..." />
+              <LoadingSpinner variant="inline" />
             ) : (
               <>
                 <FontAwesomeIcon icon={faSave} className="mr-2" /> Update User
@@ -258,7 +258,7 @@ function AdminUserDetail() {
         onConfirm={handleDeleteUser}
         confirmText={
           isDeleting ? (
-            <SpinnerWithText text="Deleting..." />
+            <LoadingSpinner variant="inline" />
           ) : (
             "Yes, Delete Permanently"
           )
@@ -273,35 +273,6 @@ function AdminUserDetail() {
         </p>
       </Modal>
     </div>
-  );
-}
-
-// Spinner with text reusable component for buttons
-function SpinnerWithText({ text }) {
-  return (
-    <span className="flex items-center justify-center w-full h-full">
-      <svg
-        className="animate-spin h-4 w-4 text-white mr-2"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="3"
-        ></circle>
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        ></path>
-      </svg>
-      <span className="text-white text-sm font-medium">{text}</span>
-    </span>
   );
 }
 

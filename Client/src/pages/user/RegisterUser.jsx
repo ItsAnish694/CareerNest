@@ -8,7 +8,6 @@ function RegisterUser() {
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // Removed: const [location, setLocation] = useState(""); // New state for combined location
   const [profilePic, setProfilePic] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -43,17 +42,6 @@ function RegisterUser() {
     formData.append("email", email);
     formData.append("password", password);
 
-    // Removed: Parse the single location string into area, city, and district
-    // const locationParts = location.split(',').map((part) => part.trim());
-    // const area = locationParts[0] || '';
-    // const city = locationParts[1] || '';
-    // const district = locationParts[2] || '';
-
-    // Removed: Appending location parts to formData
-    // formData.append("area", area);
-    // formData.append("city", city);
-    // formData.append("district", district);
-
     if (profilePic) {
       formData.append("profilePic", profilePic);
     }
@@ -64,6 +52,7 @@ function RegisterUser() {
           "Content-Type": "multipart/form-data",
         },
       });
+
       if (response.data.Success) {
         toast.success(
           "Registration successful! Please check your email for verification."
@@ -137,27 +126,7 @@ function RegisterUser() {
             disabled={loading}
           />
         </div>
-        {/* Removed: Location Input Field */}
-        {/*
-        <div>
-          <label
-            htmlFor="location"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Location
-          </label>
-          <input
-            type="text"
-            id="location"
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            required
-            disabled={loading}
-            placeholder="Enter as: Area, City, District (e.g., Ramailo Chowk, Bharatpur, Chitwan)"
-          />
-        </div>
-        */}
+
         <div>
           <label
             htmlFor="profilePic"
@@ -169,7 +138,7 @@ function RegisterUser() {
             type="file"
             id="profilePic"
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            accept="image/jpeg,image/png,image/jpg" // Added specific image types
+            accept="image/jpeg,image/png,image/jpg"
             onChange={handleFileChange}
             disabled={loading}
           />
@@ -180,29 +149,7 @@ function RegisterUser() {
           disabled={loading}
         >
           {loading ? (
-            <span className="flex items-center justify-center w-full h-full">
-              <svg
-                className="animate-spin h-4 w-4 text-white mr-2"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              <span className="text-white text-sm font-medium">Loading...</span>
-            </span>
+            <LoadingSpinner variant="inline" message="Loading" />
           ) : (
             "Register"
           )}
@@ -214,64 +161,6 @@ function RegisterUser() {
           Login
         </Link>
       </p>
-    </div>
-  );
-}
-
-// Re-defining InputField and TextAreaField as they were not part of the original RegisterUser component
-// These are assumed to be common components you have.
-// If they are in separate files, ensure they are imported correctly.
-function InputField({
-  id,
-  label,
-  type,
-  value,
-  onChange,
-  required,
-  disabled,
-  helperText,
-  placeholder,
-}) {
-  return (
-    <div>
-      <label
-        htmlFor={id}
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={onChange}
-        required={required}
-        disabled={disabled}
-        placeholder={placeholder}
-        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      {helperText && <p className="text-xs text-gray-500 mt-1">{helperText}</p>}
-    </div>
-  );
-}
-
-function TextAreaField({ id, label, value, onChange, disabled, placeholder }) {
-  return (
-    <div>
-      <label
-        htmlFor={id}
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
-        {label}
-      </label>
-      <textarea
-        id={id}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        placeholder={placeholder}
-        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-      />
     </div>
   );
 }

@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   Legend,
   Tooltip,
-} from "recharts"; // Import Recharts components
+} from "recharts";
 
 function CompanyDashboard() {
   const { company, loading: authLoading } = useContext(AuthContext);

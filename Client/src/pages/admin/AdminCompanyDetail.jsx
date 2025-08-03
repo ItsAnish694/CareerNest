@@ -16,8 +16,6 @@ import {
   faFileAlt,
 } from "@fortawesome/free-solid-svg-icons";
 
-// This is the main component for the admin company detail page.
-// It allows an administrator to view, edit, and manage a company's profile.
 function AdminCompanyDetail() {
   const { companyID } = useParams();
   const navigate = useNavigate();
@@ -36,7 +34,6 @@ function AdminCompanyDetail() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
-  // Fetch company details when the component mounts or dependencies change.
   useEffect(() => {
     if (!authLoading) {
       if (admin?.role === "admin") {
@@ -75,17 +72,14 @@ function AdminCompanyDetail() {
     }
   }
 
-  // Handles changes to form input fields.
   const handleChange = ({ target: { id, value } }) => {
     setForm((prev) => ({ ...prev, [id]: value }));
   };
 
-  // Handles the form submission to update the company's profile.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
 
-    // Parses the combined location string into individual area, city, and district.
     const [companyArea = "", companyCity = "", companyDistrict = ""] =
       form.companyLocation.split(",").map((s) => s.trim());
 
@@ -100,21 +94,17 @@ function AdminCompanyDetail() {
         companyDistrict,
       });
       if (data.Success) {
-        // Using toast.success for success message.
         toast.success("Company profile updated successfully.");
       } else {
-        // Using toast.error for error message.
         toast.error("Failed to update company profile.");
       }
     } catch {
-      // Using toast.error for catch-all error.
       toast.error("Failed to update company profile.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Handles updating the company's verification status.
   const handleUpdateStatus = async (status) => {
     setIsProcessing(true);
 
@@ -123,54 +113,43 @@ function AdminCompanyDetail() {
         `/admin/companies/${companyID}?status=${status}`
       );
       if (data.Success) {
-        // Using toast.success for success message.
         toast.success(`Company status updated to '${status}'.`);
         setCompany(data.data);
         setForm((prev) => ({ ...prev, isVerified: status }));
       } else {
-        // Using toast.error for error message.
         toast.error(data.Error?.Message || "Status update failed.");
       }
     } catch {
-      // Using toast.error for catch-all error.
       toast.error("Status update failed.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Handles the deletion of the company account.
   const handleDeleteCompany = async () => {
     setIsConfirmingDelete(false);
     setIsProcessing(true);
 
     try {
       await api.delete(`/admin/companies/${companyID}`);
-      // Using toast.success for success message.
       toast.success("Company account deleted successfully!");
-      // Redirect to the companies list after successful deletion.
       navigate("/admin/companies");
     } catch {
-      // Using toast.error for catch-all error.
       toast.error("Failed to delete company account.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Display a loading spinner while fetching data.
   if (authLoading || loading) return <LoadingSpinner />;
 
-  // Display an access denied message if the user is not an admin.
   if (!admin || admin.role !== "admin")
     return (
       <NoDataMessage message="Access Denied: You must be logged in as an administrator to view this page." />
     );
 
-  // Display a not found message if the company data is not available.
   if (!company) return <NoDataMessage message="Company not found." />;
 
-  // Logic to determine if the "Accept" and "Reject" buttons should be enabled.
   const canAccept =
     !isProcessing &&
     (company.isVerified === "pending" || company.isVerified === "rejected") &&
@@ -281,7 +260,7 @@ function AdminCompanyDetail() {
               }`}
             >
               {isProcessing && form.isVerified === "verified" ? (
-                <LoadingSpinnerInline text="Updating..." />
+                <LoadingSpinner variant="inline" />
               ) : (
                 <>
                   <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />{" "}
@@ -300,7 +279,7 @@ function AdminCompanyDetail() {
               }`}
             >
               {isProcessing && form.isVerified === "rejected" ? (
-                <LoadingSpinnerInline text="Updating..." />
+                <LoadingSpinner variant="inline" />
               ) : (
                 <>
                   <FontAwesomeIcon icon={faTimesCircle} className="mr-2" />{" "}
@@ -318,7 +297,7 @@ function AdminCompanyDetail() {
             className="flex-1 flex justify-center items-center py-4 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 transition-colors"
           >
             {isProcessing ? (
-              <LoadingSpinnerInline text="Updating..." />
+              <LoadingSpinner variant="inline" />
             ) : (
               <>
                 <FontAwesomeIcon icon={faSave} className="mr-2" /> Update
@@ -345,7 +324,7 @@ function AdminCompanyDetail() {
         onConfirm={handleDeleteCompany}
         confirmText={
           isProcessing ? (
-            <LoadingSpinnerInline text="Deleting..." />
+            <LoadingSpinner variant="inline" />
           ) : (
             "Yes, Delete Permanently"
           )
@@ -362,34 +341,6 @@ function AdminCompanyDetail() {
         </p>
       </Modal>
     </div>
-  );
-}
-
-function LoadingSpinnerInline({ text }) {
-  return (
-    <span className="flex items-center justify-center w-full h-full">
-      <svg
-        className="animate-spin h-5 w-5 text-white mr-3"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="3"
-        ></circle>
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        ></path>
-      </svg>
-      <span className="text-white font-medium">{text}</span>
-    </span>
   );
 }
 

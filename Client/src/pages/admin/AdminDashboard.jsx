@@ -51,23 +51,18 @@ function AdminDashboard() {
     }
   }
 
-  // Display a loading spinner while fetching data or authenticating.
   if (authLoading || loading) return <LoadingSpinner />;
 
-  // Display access denied message if the user is not an admin.
   if (!admin || admin.role !== "admin") {
     return (
       <NoDataMessage message="Access Denied: You must be logged in as an administrator to view this page." />
     );
   }
 
-  // Display a message if no dashboard data is available.
   if (!dashboardData) {
     return <NoDataMessage message="No dashboard data available." />;
   }
 
-  // An array of stats to be rendered as cards on the dashboard.
-  // This now includes the new monthly user and company stats.
   const stats = [
     { label: "Total Users", value: dashboardData.totalUsers, color: "blue" },
     {
@@ -95,7 +90,6 @@ function AdminDashboard() {
       value: dashboardData.totalApplications,
       color: "indigo",
     },
-    // New stats from the updated backend controller
     {
       label: "New Users This Month",
       value: dashboardData.newUserThisMonth,
@@ -118,8 +112,6 @@ function AdminDashboard() {
     },
   ];
 
-  // Data for the monthly activity bar chart.
-  // Updated to include new users and new companies this month.
   const monthlyData = [
     {
       name: "This Month",
@@ -130,13 +122,11 @@ function AdminDashboard() {
     },
   ];
 
-  // Calculate the number of unverified/rejected companies.
   const otherCompanies =
     dashboardData.totalCompanies -
     dashboardData.verifiedCompanies -
     dashboardData.pendingCompanies;
 
-  // Data for the company verification status pie chart.
   const companyStatusData = [
     { name: "Verified", value: dashboardData.verifiedCompanies },
     { name: "Pending", value: dashboardData.pendingCompanies },
@@ -149,7 +139,6 @@ function AdminDashboard() {
     });
   }
 
-  // Check if there is any monthly activity to display in the chart.
   const hasMonthlyActivity =
     dashboardData.jobsThisMonth > 0 ||
     dashboardData.applicationsThisMonth > 0 ||
@@ -162,7 +151,6 @@ function AdminDashboard() {
         Admin Dashboard
       </h2>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10">
         {stats.map(({ label, value, color }) => (
           <div
@@ -184,7 +172,6 @@ function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
-        {/* Monthly Activity Bar Chart */}
         <section className="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100">
           <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center border-b-2 pb-2 sm:pb-3 border-blue-200">
             Monthly Activity
@@ -212,7 +199,6 @@ function AdminDashboard() {
           )}
         </section>
 
-        {/* Company Verification Status Pie Chart */}
         <section className="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100">
           <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center border-b-2 pb-2 sm:pb-3 border-blue-200">
             Company Verification Status

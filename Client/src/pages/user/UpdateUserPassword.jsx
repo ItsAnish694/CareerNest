@@ -3,6 +3,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { toast } from "react-toastify";
 
 function UpdateUserPassword() {
   const { loading: authLoading, logout } = useContext(AuthContext);
@@ -14,6 +15,12 @@ function UpdateUserPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (updatedPassword !== confirmPassword) {
+      toast.error("New password and confirmation do not match.");
+      return;
+    }
+
     setLoading(true);
 
     const updateData = {
@@ -26,11 +33,17 @@ function UpdateUserPassword() {
       const response = await api.patch("/user/profile/password", updateData);
 
       if (response.data.Success) {
+        toast.success("Password updated successfully. Please log in again.");
         await logout("user");
         navigate("/login");
+      } else {
+        toast.error(response.data.Error?.Message || "Something went wrong.");
       }
     } catch (error) {
-      console.log(error.message);
+      toast.error(
+        error.response?.data?.Error?.Message ||
+          "Failed to update password. Try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -80,7 +93,7 @@ function UpdateUserPassword() {
             disabled={loading}
           />
           <p className="text-xs text-gray-500 mt-1">
-            Strong password: 8 characters, numbers, uppercase, lowercase.
+            Strong password: 8+ characters, numbers, uppercase, lowercase.
           </p>
         </div>
         <div>
