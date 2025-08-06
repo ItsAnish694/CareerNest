@@ -11,7 +11,14 @@ import {
   ResponsiveContainer,
   Legend,
   Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from "recharts";
+
+const PIE_CHART_COLORS = ["#8884d8", "#ff4d4f", "#ffc658"];
 
 function CompanyDashboard() {
   const { company, loading: authLoading } = useContext(AuthContext);
@@ -99,77 +106,123 @@ function CompanyDashboard() {
       value: dashboardData.totalPendingApplications,
       color: "yellow",
     },
+    {
+      label: "Applications This Month",
+      value: dashboardData.applicationThisMonthCount,
+      color: "indigo",
+    },
+    {
+      label: "Jobs Posted This Month",
+      value: dashboardData.jobPostedThisMonthCount,
+      color: "teal",
+    },
   ];
 
-  // Prepare data for the pie chart
   const pieChartData = [
     { name: "Accepted", value: dashboardData.totalAcceptedApplications },
     { name: "Rejected", value: dashboardData.totalRejectedApplications },
     { name: "Pending", value: dashboardData.totalPendingApplications },
   ];
 
-  // Define colors for the pie chart slices
-  const COLORS = ["#8884d8", "#ff4d4f", "#ffc658"]; // Purple, Red, Yellow (matching tailwind colors roughly)
+  const monthlyActivityData = [
+    {
+      name: "This Month",
+      "Jobs Posted": dashboardData.jobPostedThisMonthCount,
+      Applications: dashboardData.applicationThisMonthCount,
+    },
+  ];
+
+  const hasMonthlyActivity =
+    dashboardData.applicationThisMonthCount > 0 ||
+    dashboardData.jobPostedThisMonthCount > 0;
 
   return (
-    <div className="max-w-full sm:max-w-5xl mx-auto bg-white p-6 rounded-xl shadow-lg my-10 border border-gray-100">
-      <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-8 border-b-2 pb-3 border-blue-200">
+    <div className="max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white p-4 sm:p-6 rounded-xl shadow-lg my-6 sm:my-10 border border-gray-100">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 mb-6 sm:mb-8 pb-3 border-b-2 border-blue-200">
         Company Dashboard
       </h2>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        {stats.map((item) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
+        {stats.map(({ label, value, color }) => (
           <div
-            key={item.label}
-            className={`bg-${item.color}-50 p-5 rounded-lg shadow text-center border border-${item.color}-100`}
+            key={label}
+            className={`bg-${color}-50 p-4 sm:p-5 rounded-lg shadow text-center border border-${color}-100`}
           >
-            <h3 className={`text-lg font-semibold text-${item.color}-800`}>
-              {item.label}
+            <h3
+              className={`text-base sm:text-lg font-semibold text-${color}-800`}
+            >
+              {label}
             </h3>
-            <p className={`text-3xl font-bold text-${item.color}-600 mt-2`}>
-              {item.value}
+            <p
+              className={`text-2xl sm:text-3xl font-bold text-${color}-600 mt-1 sm:mt-2`}
+            >
+              {value}
             </p>
           </div>
         ))}
       </div>
 
-      {/* Pie Chart for Application Statuses */}
-      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center border-b-2 pb-3 border-blue-200">
-          Application Status Distribution
-        </h3>
-        {/* Check if there's data to display in the pie chart */}
-        {dashboardData.totalApplications > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={pieChartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-                nameKey="name"
-                label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-                }
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
+        <section className="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100">
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center border-b-2 pb-2 sm:pb-3 border-blue-200">
+            Monthly Activity
+          </h3>
+
+          {hasMonthlyActivity ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={monthlyActivityData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                {pieChartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        ) : (
-          <NoDataMessage message="No application data to display in the chart." />
-        )}
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="Jobs Posted" fill="#3b82f6" />
+                <Bar dataKey="Applications" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <NoDataMessage message="No job or application activity this month." />
+          )}
+        </section>
+
+        <section className="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100">
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center border-b-2 pb-2 sm:pb-3 border-blue-200">
+            Application Status Distribution
+          </h3>
+
+          {dashboardData.totalApplications > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={pieChartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={100}
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
+                >
+                  {pieChartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <NoDataMessage message="No application data to display in the chart." />
+          )}
+        </section>
       </div>
     </div>
   );

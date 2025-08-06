@@ -985,18 +985,46 @@ export const companyDashboard = asyncHandler(async function (req, res) {
 
   const totalJobPosting = jobIDs.length;
 
-  const applicationStatus = await Application.aggregate([
-    {
-      $match: {
-        jobID: { $in: jobIDs },
+  const currentDate = new Date();
+
+  const monthStart = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
+
+  const monthEnd = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    1
+  );
+
+  const [
+    applicationStatus,
+    applicationThisMonthCount,
+    jobPostedThisMonthCount,
+  ] = await Promise.all([
+    Application.aggregate([
+      {
+        $match: {
+          jobID: { $in: jobIDs },
+        },
       },
-    },
-    {
-      $group: {
-        _id: "$status",
-        count: { $sum: 1 },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
       },
-    },
+    ]),
+    Application.countDocuments({
+      jobID: { $in: jobIDs },
+      createdAt: { $gte: monthStart, $lt: monthEnd },
+    }),
+    Job.countDocuments({
+      companyID,
+      createdAt: { $gte: monthStart, $lt: monthEnd },
+    }),
   ]);
 
   const allStatus = {
@@ -1005,6 +1033,8 @@ export const companyDashboard = asyncHandler(async function (req, res) {
     totalAcceptedApplications: 0,
     totalRejectedApplications: 0,
     totalPendingApplications: 0,
+    applicationThisMonthCount,
+    jobPostedThisMonthCount,
   };
 
   for (const status of applicationStatus) {
