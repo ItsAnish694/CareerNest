@@ -17,16 +17,13 @@ import {
   CartesianGrid,
 } from "recharts";
 
-// Colors for the Pie Chart.
 const PIE_CHART_COLORS = ["#8884d8", "#ffc658", "#82ca9d"];
 
-// Main component for the Admin Dashboard.
 function AdminDashboard() {
   const { admin, loading: authLoading } = useContext(AuthContext);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch dashboard data when the component mounts or auth state changes.
   useEffect(() => {
     if (!authLoading) {
       if (admin?.role === "admin") {
@@ -38,7 +35,6 @@ function AdminDashboard() {
     }
   }, [authLoading, admin]);
 
-  // Asynchronously fetches all the dashboard data from the backend API.
   async function fetchDashboardData() {
     setLoading(true);
     try {
@@ -188,10 +184,10 @@ function AdminDashboard() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="New Jobs" fill="#3b82f6" /> {/* Blue */}
-                <Bar dataKey="New Applications" fill="#22c55e" /> {/* Green */}
-                <Bar dataKey="New Users" fill="#f97316" /> {/* Orange */}
-                <Bar dataKey="New Companies" fill="#14b8a6" /> {/* Teal */}
+                <Bar dataKey="New Jobs" fill="#3b82f6" />
+                <Bar dataKey="New Applications" fill="#22c55e" />
+                <Bar dataKey="New Users" fill="#f97316" />
+                <Bar dataKey="New Companies" fill="#14b8a6" />
               </BarChart>
             </ResponsiveContainer>
           ) : (

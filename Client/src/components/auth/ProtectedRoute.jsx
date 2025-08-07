@@ -7,12 +7,10 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
   const { user, company, admin, loading } = useContext(AuthContext);
   const location = useLocation();
 
-  // Show spinner while auth status is loading
   if (loading) {
     return <LoadingSpinner />;
   }
 
-  // Determine logged-in role
   let currentUserRole = null;
   if (admin) {
     currentUserRole = "admin";
@@ -24,17 +22,14 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
 
   const isAuthenticated = !!admin || !!user || !!company;
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // Redirect to home if user's role is not allowed for this route
   if (allowedRoles.length > 0 && !allowedRoles.includes(currentUserRole)) {
     return <Navigate to="/" replace />;
   }
 
-  // Verification redirect for company users
   if (
     currentUserRole === "company" &&
     company?.isVerified?.toLowerCase() !== "verified" &&
@@ -43,7 +38,6 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
     return <Navigate to="/company/profile" replace />;
   }
 
-  // Verification redirect for normal users
   if (
     currentUserRole === "user" &&
     !user?.isVerified &&
@@ -52,7 +46,6 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
     return <Navigate to="/user/profile" replace />;
   }
 
-  // Passed all checks — render nested routes
   return <Outlet />;
 };
 

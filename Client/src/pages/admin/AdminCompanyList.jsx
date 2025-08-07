@@ -51,7 +51,7 @@ function AdminCompanyList() {
     setCurrentPage(pageParam);
     setSearchQuery(qParam);
     setStatusFilter(statusParam);
-    setMessage({ text: "", type: "" }); // Clear message on search/filter/page change
+    setMessage({ text: "", type: "" });
 
     if (!authLoading && admin?.role === "admin") {
       fetchCompanies(pageParam, qParam, statusParam);
@@ -203,7 +203,6 @@ function AdminCompanyList() {
         </select>
       </div>
 
-      {/* Table */}
       {companies.length === 0 ? (
         <NoDataMessage
           message={`No companies found${

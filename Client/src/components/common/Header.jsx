@@ -33,14 +33,12 @@ function Header() {
     } else if (admin) {
       result = await logout("admin");
     } else {
-      // No active session, so do nothing.
       return;
     }
 
     if (result.success) {
       navigate("/login");
     }
-    // No error message will be shown on failure.
   };
 
   const toggleMobileMenu = () => {

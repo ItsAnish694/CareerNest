@@ -2,19 +2,17 @@ import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import { toast, ToastContainer } from "react-toastify"; // Import toast and ToastContainer
+import { toast, ToastContainer } from "react-toastify";
 
-// This component provides the login form for different user roles (Job Seeker, Company, Admin).
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user"); // Default role
+  const [role, setRole] = useState("user");
   const [loading, setLoading] = useState(false);
 
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Handles the form submission for logging in a user.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -22,12 +20,9 @@ function Login() {
     const result = await login(role, email, password);
     setLoading(false);
 
-    // Checks the result from the login function.
     if (result.success) {
-      // Use toast.success for a successful login message.
       toast.success(result.message || "Login successful!");
 
-      // Navigate to the appropriate dashboard based on the user's role.
       if (role === "user") {
         navigate("/jobs");
       } else if (role === "company") {
@@ -40,14 +35,12 @@ function Login() {
         navigate(result.redirLink || "/admin/dashboard");
       }
     } else {
-      // Use toast.error for a failed login message.
       toast.error(result.message || "Login failed. Please try again.");
     }
   };
 
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md my-10">
-      {/* ToastContainer to display the notifications */}
       <ToastContainer />
       <h2 className="text-3xl font-bold text-center text-gray-900 mb-6">
         Login to CareerNest

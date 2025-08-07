@@ -12,16 +12,13 @@ export const AuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Send cookies with requests for cross-origin
   axios.defaults.withCredentials = true;
 
-  // Checks who is logged in by trying admin, user, then company profiles
   const checkAuthStatus = async () => {
     setLoading(true);
     let loggedInEntity = null;
     let currentRole = null;
 
-    // 1. Try Admin first
     try {
       const res = await axios.get(`${API_BASE_URL}/admin/dashboard`);
       if (res.data.Success) {
@@ -42,7 +39,6 @@ export const AuthProvider = ({ children }) => {
       setAdmin(null);
     }
 
-    // 2. If no admin, try user
     if (!currentRole) {
       try {
         const res = await axios.get(`${API_BASE_URL}/user/profile`);
@@ -65,7 +61,6 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    // 3. If no admin or user, try company
     if (!currentRole) {
       try {
         const res = await axios.get(`${API_BASE_URL}/company/profile`);
@@ -92,19 +87,16 @@ export const AuthProvider = ({ children }) => {
     return loggedInEntity;
   };
 
-  // Login function supports admin, user, or company roles
   const login = async (role, emailOrUsername, password) => {
     try {
       let response;
 
       if (role === "admin") {
-        // Admin login expects username/password
         response = await axios.post(`${API_BASE_URL}/admin/login`, {
           username: emailOrUsername,
           password,
         });
       } else {
-        // User/Company login expects email/password with keys like userEmail/userPassword or companyEmail/companyPassword
         response = await axios.post(`${API_BASE_URL}/${role}/login`, {
           [`${role}Email`]: emailOrUsername,
           [`${role}Password`]: password,
@@ -136,10 +128,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function for any role
   const logout = async (role) => {
     try {
-      // Optimistically clear local state for quick UI update
       setUser(null);
       setCompany(null);
       setAdmin(null);

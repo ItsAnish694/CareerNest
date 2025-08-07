@@ -30,7 +30,6 @@ function LoadingSpinner({
     );
   }
 
-  // Default: page variant
   return (
     <div className="flex flex-col items-center justify-center min-h-[200px] bg-white bg-opacity-90 rounded-lg shadow p-6 my-6">
       <svg

@@ -61,7 +61,6 @@ function AdminUserList() {
     } catch {
       setUsers([]);
       setTotalUsersCount(0);
-      // Global error handling assumed
     } finally {
       setLoading(false);
     }
@@ -118,7 +117,6 @@ function AdminUserList() {
         Manage Job Seekers
       </h2>
 
-      {/* Search Bar */}
       <div className="max-w-xl mx-auto mb-8">
         <form onSubmit={handleSearchSubmit} className="flex gap-2">
           <input
@@ -139,7 +137,6 @@ function AdminUserList() {
         </form>
       </div>
 
-      {/* User Table or No Data */}
       {users.length === 0 ? (
         <NoDataMessage message="No job seekers found." />
       ) : (

@@ -15,7 +15,6 @@ function JobCard({ job, currentUser }) {
 
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 p-4 sm:p-5 md:p-6 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out border border-gray-100 flex flex-col justify-between h-full transform hover:-translate-y-1 max-w-full mx-auto xl:max-w-6xl">
-      {/* Header (logo and title) */}
       <div className="flex-grow">
         <div className="flex items-start mb-3 sm:mb-4">
           <img
@@ -37,12 +36,10 @@ function JobCard({ job, currentUser }) {
           </div>
         </div>
 
-        {/* Description */}
         <p className="text-gray-700 text-xs sm:text-sm lg:text-base mb-3 sm:mb-4 line-clamp-3 leading-relaxed">
           {job.jobDescription}
         </p>
 
-        {/* Details */}
         <div className="space-y-1.5 sm:space-y-2 text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4">
           <p className="flex items-center text-xs sm:text-sm lg:text-base">
             <FontAwesomeIcon
@@ -80,7 +77,6 @@ function JobCard({ job, currentUser }) {
           </p>
         </div>
 
-        {/* Skills */}
         {job.requiredSkills && job.requiredSkills.length > 0 && (
           <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3 sm:mb-4">
             {job.requiredSkills.slice(0, 3).map((skill, index) => (
@@ -99,7 +95,6 @@ function JobCard({ job, currentUser }) {
           </div>
         )}
 
-        {/* Match Score */}
         {currentUser?.role === "user" &&
           typeof job.totalMatchedScore === "number" && (
             <div className="flex items-center bg-green-50 text-green-800 font-bold text-sm px-3 py-1 sm:px-4 sm:py-1.5 rounded-md mb-3 sm:mb-4 shadow-sm">
@@ -109,7 +104,6 @@ function JobCard({ job, currentUser }) {
           )}
       </div>
 
-      {/* Button */}
       <div className="mt-auto pt-3 sm:pt-4">
         <Link
           to={`/jobs/${job._id}`}

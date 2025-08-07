@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
@@ -38,7 +38,6 @@ import HomePage from "./pages/common/HomePage";
 import UpdateProfilePicture from "./pages/user/UpdateProfilePicture";
 import UpdateResume from "./pages/user/UpdateResume";
 
-// Admin Components - NEW IMPORTS
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUserList from "./pages/admin/AdminUserList";
@@ -58,7 +57,6 @@ function App() {
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <Routes>
-          {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/user/register" element={<RegisterUser />} />
@@ -71,7 +69,6 @@ function App() {
           <Route path="/jobs/:jobId" element={<JobDetails />} />
           <Route path="/search" element={<JobListing />} />
 
-          {/* User Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["user"]} />}>
             <Route path="/user/profile" element={<UserProfile />} />
             <Route
@@ -106,7 +103,6 @@ function App() {
             />
           </Route>
 
-          {/* Company Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
             <Route path="/company/profile" element={<CompanyProfile />} />
             <Route
@@ -134,12 +130,9 @@ function App() {
             />
           </Route>
 
-          {/* Admin Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
             <Route path="/admin" element={<AdminLayout />}>
-              {/* AdminLayout wraps all admin pages */}
               <Route index element={<AdminDashboard />} />{" "}
-              {/* Default admin route */}
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="users" element={<AdminUserList />} />
               <Route path="users/:userID" element={<AdminUserDetail />} />
@@ -151,7 +144,6 @@ function App() {
             </Route>
           </Route>
 
-          {/* Fallback for unknown routes */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

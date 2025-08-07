@@ -190,7 +190,6 @@ function CompanyJobPostings() {
         </div>
       )}
 
-      {/* Pagination */}
       {jobs.length > 0 && (
         <div className="mt-8 flex justify-center">
           <Pagination
@@ -202,7 +201,6 @@ function CompanyJobPostings() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       <Modal
         isOpen={jobToDelete !== null}
         onClose={() => setJobToDelete(null)}
